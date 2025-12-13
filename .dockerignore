@@ -1,0 +1,25 @@
+# Ignore ces fichiers lors du build Docker/Railway
+node_modules
+.svelte-kit
+build
+.git
+.gitignore
+.vscode
+.idea
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Fichiers de développement
+*.md
+!README.md
+.editorconfig
+.prettierrc
+.eslintrc
+
+# Fichiers temporaires
+*.tmp
+*.temp
+.cache

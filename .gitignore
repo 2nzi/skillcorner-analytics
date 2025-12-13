@@ -1,0 +1,60 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+
+# SvelteKit
+.svelte-kit
+build
+.vercel
+.netlify
+.adapter
+
+# Build outputs
+dist
+dist-ssr
+.output
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Data files (pour votre projet football)
+# IMPORTANT: On autorise les fichiers dans opendata/ pour le déploiement
+# *.csv
+# *.jsonl
+*.parquet
+*.feather
+*.arrow
+*.orc
+*.py
+*.ipynb
+# *.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+\.claude
