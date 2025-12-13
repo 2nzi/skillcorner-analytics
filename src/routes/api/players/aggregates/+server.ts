@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import fs from 'fs';
-import path from 'path';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 import { parse } from 'csv-parse/sync';
 
 type PlayerAggregate = {
@@ -39,12 +39,12 @@ type AggregatedPlayer = {
 
 export const GET: RequestHandler = async () => {
   try {
-    // Path to aggregates folder
-    const aggregatesPath = 'C:\\Users\\antoi\\Documents\\Work_Learn\\skillcorner\\opendata\\data\\aggregates';
-    const csvFile = path.join(aggregatesPath, 'aus1league_physicalaggregates_20242025_midfielders.csv');
+    // Path to aggregates folder (à la racine du projet)
+    const aggregatesPath = join(process.cwd(), 'opendata', 'data', 'aggregates');
+    const csvFile = join(aggregatesPath, 'aus1league_physicalaggregates_20242025_midfielders.csv');
 
     // Read CSV file
-    const fileContent = fs.readFileSync(csvFile, 'utf-8');
+    const fileContent = await readFile(csvFile, 'utf-8');
     const records = parse(fileContent, {
       columns: true,
       skip_empty_lines: true,
