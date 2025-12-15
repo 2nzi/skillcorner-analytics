@@ -33,6 +33,7 @@ type AggregatedPlayer = {
   surname: string;
   age: number;
   position: string;
+  team_name: string;
   scores: Record<string, number>;
   rawValues: Record<string, number>;
 };
@@ -148,6 +149,7 @@ export const GET: RequestHandler = async () => {
         surname: lastName,
         age,
         position: player.position_group,
+        team_name: player.team_name,
         scores: {
           'Minutes': normalize(player.minutes_full_all, 'minutes_full_all'),
           'Total distance': normalize(player.total_distance_full_all, 'total_distance_full_all'),
