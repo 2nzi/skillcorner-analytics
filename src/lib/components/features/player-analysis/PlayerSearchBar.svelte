@@ -17,6 +17,7 @@
 
   let searchQuery = $state('');
   let showDropdown = $state(false);
+  let hasSelectedPlayer = $state(false);
 
   // Filtrer les joueurs selon la recherche
   const filteredPlayers = $derived(() => {
@@ -38,10 +39,14 @@
   });
 
   function handleSelect(playerId: string) {
+    console.log('handleSelect called with:', playerId);
     const player = players.find(p => p.id === playerId);
+    console.log('Found player in search:', player);
     if (player) {
-      searchQuery = `${player.name} ${player.surname}`;
+      searchQuery = '';
       showDropdown = false;
+      hasSelectedPlayer = true;
+      console.log('Calling onSelect with:', playerId);
       onSelect(playerId);
     }
   }
@@ -51,18 +56,32 @@
       showDropdown = false;
     }, 200);
   }
+
+  function clearAndFocus() {
+    searchQuery = '';
+    showDropdown = false;
+    hasSelectedPlayer = false;
+  }
 </script>
 
 <div class="search-container">
   <NotchedBox padding="0" backgroundColor="rgba(255, 255, 255, 0.05)">
-    <input
-      bind:value={searchQuery}
-      onblur={handleBlur}
-      onfocus={() => showDropdown = searchQuery.length > 0 && filteredPlayers().length > 0}
-      type="text"
-      placeholder="Search player..."
-      class="search-input"
-    />
+    <div class="input-wrapper">
+      <input
+        bind:value={searchQuery}
+        onblur={handleBlur}
+        onfocus={() => showDropdown = searchQuery.length > 0 && filteredPlayers().length > 0}
+        type="text"
+        placeholder={hasSelectedPlayer ? "" : "Search player..."}
+        class="search-input"
+        class:has-selected={hasSelectedPlayer}
+      />
+      {#if hasSelectedPlayer && !searchQuery}
+        <div class="custom-placeholder">
+          Search <span class="neon-text">new</span> player...
+        </div>
+      {/if}
+    </div>
   </NotchedBox>
 
   {#if showDropdown && filteredPlayers().length > 0}
@@ -95,6 +114,7 @@
 
   .search-container :global(.notched-box-border) {
     width: 100%;
+    position: relative;
   }
 
   .search-input {
@@ -108,8 +128,74 @@
     outline: none;
   }
 
+  .search-input[readonly] {
+    cursor: default;
+  }
+
   .search-input::placeholder {
     color: rgba(0, 0, 0, 0.5);
+  }
+
+  .input-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .custom-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    color: rgba(0, 0, 0, 0.5);
+    font-size: 1rem;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .new-search-button {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: black;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    z-index: 10;
+  }
+
+  .neon-text {
+    color: #34FF6B;
+    text-shadow:
+      0 0 5px #34FF6B,
+      0 0 10px #34FF6B,
+      0 0 20px #34FF6B,
+      0 0 40px #34FF6B;
+    animation: neon-glow 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes neon-glow {
+    from {
+      text-shadow:
+        0 0 5px #34FF6B,
+        0 0 10px #34FF6B,
+        0 0 20px #34FF6B,
+        0 0 40px #34FF6B;
+    }
+    to {
+      text-shadow:
+        0 0 10px #34FF6B,
+        0 0 20px #34FF6B,
+        0 0 30px #34FF6B,
+        0 0 50px #34FF6B,
+        0 0 60px #34FF6B;
+    }
   }
 
   .search-container :global(.dropdown-box) {
