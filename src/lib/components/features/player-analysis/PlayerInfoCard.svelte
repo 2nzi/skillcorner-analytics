@@ -98,15 +98,15 @@
 
 <style>
   .player-card {
-    padding: 1.5rem;
+    padding: 1rem;
     min-height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.5rem;
+    gap: 1rem;
     margin: 0 auto;
-    max-width: 500px;
+    max-width: 400px;
   }
 
   .player-card.empty {
@@ -115,8 +115,8 @@
 
   /* Photo placeholder */
   .photo-placeholder {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: linear-gradient(135deg,
       rgba(255, 255, 255, 0.1) 0%,
@@ -128,7 +128,7 @@
   }
 
   .initials {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: rgba(0, 0, 0, 0.8);
     letter-spacing: 0.05em;
@@ -140,10 +140,10 @@
   }
 
   .player-name {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: black;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.25rem 0;
     letter-spacing: 0.02em;
   }
 
@@ -152,7 +152,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: rgba(0, 0, 0, 0.7);
   }
 
@@ -170,13 +170,13 @@
     width: 100%;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    gap: 0.5rem;
     margin-top: 0.5rem;
   }
 
   .stat-card {
     background: rgba(255, 255, 255, 0.05);
-    padding: 0.75rem;
+    padding: 0.5rem;
     border-radius: 8px;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -189,21 +189,21 @@
   }
 
   .stat-value {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 700;
     color: black;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
   }
 
   .unit {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 400;
     color: rgba(0, 0, 0, 0.6);
     margin-left: 0.25rem;
   }
 
   .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: rgba(0, 0, 0, 0.6);
     text-transform: uppercase;
     letter-spacing: 0.05em;

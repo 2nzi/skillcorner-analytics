@@ -82,7 +82,7 @@
         <p class="error-message">� {error}</p>
         <button onclick={loadPlayers} class="retry-button">Retry</button>
       </div>
-    {:else}
+    {:else if selectedPlayer}
       <div class="player-card-container">
         <PlayerInfoCard player={selectedPlayer} />
       </div>
@@ -119,7 +119,7 @@
 
   .player-card-container {
     width: 100%;
-    max-width: 500px;
+    max-width: 400px;
     display: flex;
     justify-content: center;
     align-items: center;

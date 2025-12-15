@@ -1,4 +1,6 @@
 <script lang="ts">
+  import NotchedBox from '$lib/components/ui/NotchedBox.svelte';
+
   type Props = {
     players: Array<{
       id: string;
@@ -52,28 +54,32 @@
 </script>
 
 <div class="search-container">
-  <input
-    bind:value={searchQuery}
-    onblur={handleBlur}
-    onfocus={() => showDropdown = searchQuery.length > 0 && filteredPlayers().length > 0}
-    type="text"
-    placeholder="Search player..."
-    class="search-input"
-  />
+  <NotchedBox padding="0" backgroundColor="rgba(255, 255, 255, 0.05)">
+    <input
+      bind:value={searchQuery}
+      onblur={handleBlur}
+      onfocus={() => showDropdown = searchQuery.length > 0 && filteredPlayers().length > 0}
+      type="text"
+      placeholder="Search player..."
+      class="search-input"
+    />
+  </NotchedBox>
 
   {#if showDropdown && filteredPlayers().length > 0}
-    <div class="dropdown">
-      {#each filteredPlayers() as player (player.id)}
-        <button
-          class="dropdown-item"
-          onclick={() => handleSelect(player.id)}
-          type="button"
-        >
-          <div class="player-name">{player.name} {player.surname}</div>
-          <div class="player-meta">{player.position}{#if player.team} • {player.team}{/if}</div>
-        </button>
-      {/each}
-    </div>
+    <NotchedBox padding="0" backgroundColor="#1a1a1a" borderColor="rgba(255, 255, 255, 0.2)" class="dropdown-box">
+      <div class="dropdown">
+        {#each filteredPlayers() as player (player.id)}
+          <button
+            class="dropdown-item"
+            onclick={() => handleSelect(player.id)}
+            type="button"
+          >
+            <div class="player-name">{player.name} {player.surname}</div>
+            <div class="player-meta">{player.position}{#if player.team} • {player.team}{/if}</div>
+          </button>
+        {/each}
+      </div>
+    </NotchedBox>
   {/if}
 </div>
 
@@ -82,41 +88,40 @@
     position: relative;
     width: 100%;
     max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .search-container :global(.notched-box-border) {
+    width: 100%;
   }
 
   .search-input {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: white;
+    background: transparent;
+    border: none;
+    color: black;
     font-size: 1rem;
     font-family: inherit;
     outline: none;
-    transition: all 0.2s ease;
   }
 
   .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(0, 0, 0, 0.5);
   }
 
-  .search-input:focus {
-    border-color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  .dropdown {
+  .search-container :global(.dropdown-box) {
     position: absolute;
     top: calc(100% + 0.5rem);
     left: 0;
     right: 0;
-    background: #1a1a1a;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    overflow: hidden;
     z-index: 1000;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    width: 100%;
+  }
+
+  .dropdown {
     max-height: 300px;
     overflow-y: auto;
   }
