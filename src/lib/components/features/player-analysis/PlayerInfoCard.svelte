@@ -126,23 +126,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
     z-index: 2;
   }
 
   .close-button:hover {
     background: rgba(255, 59, 48, 0.3);
     color: #ff3b30;
-    transform: scale(1.1);
-  }
-
-  .close-button:active {
-    transform: scale(0.95);
-  }
-
-  .close-button svg {
-    width: 20px;
-    height: 20px;
   }
 
   .player-card {

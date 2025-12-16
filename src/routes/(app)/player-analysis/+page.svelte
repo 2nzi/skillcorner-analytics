@@ -21,25 +21,14 @@
   let error = $state<string | null>(null);
   const MAX_PLAYERS = 3;
 
-  // Charger les joueurs depuis l'API
   async function loadPlayers() {
     try {
       loading = true;
       error = null;
-
       const response = await fetch('/api/players/aggregates');
-      if (!response.ok) {
-        throw new Error('Failed to load players');
-      }
-
+      if (!response.ok) throw new Error('Failed to load players');
       const data = await response.json();
-
-      // Mapper team_name vers team pour compatibilité
-      players = data.map((p: any) => ({
-        ...p,
-        team: p.team_name
-      }));
-
+      players = data.map((p: any) => ({ ...p, team: p.team_name }));
     } catch (err) {
       console.error('Error loading players:', err);
       error = err instanceof Error ? err.message : 'Unknown error';
@@ -51,7 +40,6 @@
   function handlePlayerSelect(playerId: string) {
     const player = players.find(p => p.id === playerId);
     if (player && selectedPlayers.length < MAX_PLAYERS) {
-      // Vérifier si le joueur n'est pas déjà sélectionné
       if (!selectedPlayers.find(p => p.id === playerId)) {
         selectedPlayers = [...selectedPlayers, player];
       }
@@ -83,7 +71,7 @@
       </div>
     {:else if error}
       <div class="error-state">
-        <p class="error-message">� {error}</p>
+        <p class="error-message">{error}</p>
         <button onclick={loadPlayers} class="retry-button">Retry</button>
       </div>
     {:else if selectedPlayers.length > 0}
@@ -92,6 +80,21 @@
           <PlayerInfoCard {player} onRemove={() => handleRemovePlayer(player.id)} />
         {/each}
       </div>
+      
+      <button class="scroll-indicator" aria-label="Scroll down">
+        <svg 
+          width="24" 
+          height="24" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        >
+          <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+        </svg>
+      </button>
     {/if}
   </div>
 </div>
@@ -115,8 +118,10 @@
     width: 100%;
   }
 
+  /* MODIFICATION ICI : flex-direction: column pour mettre la grille AU-DESSUS du bouton */
   .page-content {
     display: flex;
+    flex-direction: column; 
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -124,16 +129,55 @@
   }
 
   .player-cards-grid {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    width: 100%;
-    max-width: 1400px;
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center; 
+      flex-wrap: nowrap;
+      width: 100%;
+      overflow-x: auto;
+      align-items: stretch; 
   }
 
-  /* Loading state */
+  .player-cards-grid > :global(.player-info-card) { 
+      display: flex;
+      flex-direction: column; 
+      height: 100%; 
+      flex: 0 0 350px; 
+      width: 350px; 
+      max-width: 350px; 
+  }
+
+  /* MODIFICATION ICI : Style pour nettoyer le bouton et l'animer */
+  .scroll-indicator {
+      background: transparent; /* Enlève le fond gris du bouton */
+      border: none;            /* Enlève la bordure du bouton */
+      cursor: pointer;
+      padding: 0;
+      margin-top: 2rem;        /* Espace entre les cards et la flèche */
+      
+      color: white;
+      animation: bounce 2s infinite;
+      opacity: 0.8;
+      display: flex;           /* Centre le SVG dans le bouton */
+  }
+
+  .scroll-indicator svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-10px);
+    }
+    60% {
+      transform: translateY(-5px);
+    }
+  }
+
   .loading-state {
     display: flex;
     flex-direction: column;
@@ -158,7 +202,6 @@
     }
   }
 
-  /* Error state */
   .error-state {
     display: flex;
     flex-direction: column;
@@ -190,7 +233,6 @@
     transform: translateY(-2px);
   }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .player-analysis-page {
       padding: 1rem;
@@ -204,6 +246,6 @@
     .player-cards-grid {
       flex-direction: column;
       align-items: center;
-    }
+    } 
   }
 </style>
