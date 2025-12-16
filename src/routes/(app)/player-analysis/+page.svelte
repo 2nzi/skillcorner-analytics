@@ -16,9 +16,10 @@
   };
 
   let players = $state<Player[]>([]);
-  let selectedPlayer = $state<Player | null>(null);
+  let selectedPlayers = $state<Player[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
+  const MAX_PLAYERS = 3;
 
   // Charger les joueurs depuis l'API
   async function loadPlayers() {
@@ -48,14 +49,17 @@
   }
 
   function handlePlayerSelect(playerId: string) {
-    console.log('Selecting player with ID:', playerId);
-    console.log('Available players:', players.length);
     const player = players.find(p => p.id === playerId);
-    console.log('Found player:', player);
-    if (player) {
-      selectedPlayer = player;
-      console.log('Selected player set to:', selectedPlayer);
+    if (player && selectedPlayers.length < MAX_PLAYERS) {
+      // Vérifier si le joueur n'est pas déjà sélectionné
+      if (!selectedPlayers.find(p => p.id === playerId)) {
+        selectedPlayers = [...selectedPlayers, player];
+      }
     }
+  }
+
+  function handleRemovePlayer(playerId: string) {
+    selectedPlayers = selectedPlayers.filter(p => p.id !== playerId);
   }
 
   onMount(() => {
@@ -82,9 +86,11 @@
         <p class="error-message">� {error}</p>
         <button onclick={loadPlayers} class="retry-button">Retry</button>
       </div>
-    {:else if selectedPlayer}
-      <div class="player-card-container">
-        <PlayerInfoCard player={selectedPlayer} />
+    {:else if selectedPlayers.length > 0}
+      <div class="player-cards-grid">
+        {#each selectedPlayers as player (player.id)}
+          <PlayerInfoCard {player} onRemove={() => handleRemovePlayer(player.id)} />
+        {/each}
       </div>
     {/if}
   </div>
@@ -117,12 +123,14 @@
     flex: 0 0 auto;
   }
 
-  .player-card-container {
-    width: 100%;
-    max-width: 400px;
+  .player-cards-grid {
     display: flex;
+    gap: 1.5rem;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1400px;
   }
 
   /* Loading state */
@@ -193,8 +201,9 @@
       padding-top: 0.5rem;
     }
 
-    .player-card-container {
-      max-width: 100%;
+    .player-cards-grid {
+      flex-direction: column;
+      align-items: center;
     }
   }
 </style>

@@ -12,9 +12,10 @@
       team?: string;
       rawValues: Record<string, number>;
     } | null;
+    onRemove?: () => void;
   };
 
-  let { player }: Props = $props();
+  let { player, onRemove }: Props = $props();
 
   // Debug log
   $effect(() => {
@@ -53,12 +54,21 @@
 </script>
 
 {#if player}
-  <NotchedBox>
-    <div class="player-card">
-      <!-- Photo placeholder -->
-      <div class="photo-placeholder">
-        <div class="initials">{player.name[0]}{player.surname[0]}</div>
-      </div>
+  <div class="card-wrapper">
+    <!-- Close button -->
+    {#if onRemove}
+      <button class="close-button" on:click={onRemove} aria-label="Remove player">
+        ×
+      </button>
+
+    {/if}
+
+    <NotchedBox>
+      <div class="player-card">
+        <!-- Photo placeholder -->
+        <div class="photo-placeholder">
+          <div class="initials">{player.name[0]}{player.surname[0]}</div>
+        </div>
 
       <!-- Infos principales -->
       <div class="player-identity">
@@ -85,6 +95,7 @@
       </div>
     </div>
   </NotchedBox>
+  </div>
 {:else}
   <NotchedBox>
     <div class="player-card empty">
@@ -97,6 +108,43 @@
 {/if}
 
 <style>
+  .card-wrapper {
+    position: relative;
+    max-width: 400px;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 2;
+  }
+
+  .close-button:hover {
+    background: rgba(255, 59, 48, 0.3);
+    color: #ff3b30;
+    transform: scale(1.1);
+  }
+
+  .close-button:active {
+    transform: scale(0.95);
+  }
+
+  .close-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
   .player-card {
     padding: 1rem;
     min-height: auto;
