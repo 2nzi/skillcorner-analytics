@@ -106,7 +106,7 @@
     justify-content: center;
     gap: 1rem;
     margin: 0 auto;
-    max-width: 400px;
+    max-width: 300px;
   }
 
   .player-card.empty {

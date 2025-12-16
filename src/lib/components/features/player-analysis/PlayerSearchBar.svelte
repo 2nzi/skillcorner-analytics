@@ -171,30 +171,30 @@
   }
 
   .neon-text {
-    color: #34FF6B;
+    color: #000000;
     text-shadow:
-      0 0 5px #34FF6B,
-      0 0 10px #34FF6B,
-      0 0 20px #34FF6B,
-      0 0 40px #34FF6B;
-    animation: neon-glow 1.5s ease-in-out infinite alternate;
+      0 0 5px #000000,
+      0 0 10px #000000,
+      0 0 20px #000000,
+      0 0 40px #000000;
+    animation: neon-glow 0.9s ease-in-out infinite alternate;
   }
 
   @keyframes neon-glow {
     from {
       text-shadow:
-        0 0 5px #34FF6B,
-        0 0 10px #34FF6B,
-        0 0 20px #34FF6B,
-        0 0 40px #34FF6B;
+        0 0 5px #000000,
+        0 0 10px #000000,
+        0 0 20px #000000,
+        0 0 40px #000000;
     }
     to {
       text-shadow:
-        0 0 10px #34FF6B,
-        0 0 20px #34FF6B,
-        0 0 30px #34FF6B,
-        0 0 50px #34FF6B,
-        0 0 60px #34FF6B;
+        0 0 10px #000000,
+        0 0 20px #000000,
+        0 0 30px #000000,
+        0 0 50px #000000,
+        0 0 60px #000000;
     }
   }
 
