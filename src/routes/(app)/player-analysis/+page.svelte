@@ -19,6 +19,8 @@
   let selectedPlayers = $state<Player[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
+  
+  let analysisSection: HTMLElement;
   const MAX_PLAYERS = 3;
 
   async function loadPlayers() {
@@ -50,12 +52,19 @@
     selectedPlayers = selectedPlayers.filter(p => p.id !== playerId);
   }
 
+  function scrollToAnalysis() {
+    if (analysisSection) {
+      analysisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   onMount(() => {
     loadPlayers();
   });
 </script>
 
-<div class="player-analysis-page">
+<div class="player-analysis-page {selectedPlayers.length > 0 ? 'has-content' : ''}">
+  
   <div class="page-header">
     <PlayerSearchBar
       {players}
@@ -75,26 +84,45 @@
         <button onclick={loadPlayers} class="retry-button">Retry</button>
       </div>
     {:else if selectedPlayers.length > 0}
-      <div class="player-cards-grid">
-        {#each selectedPlayers as player (player.id)}
-          <PlayerInfoCard {player} onRemove={() => handleRemovePlayer(player.id)} />
-        {/each}
-      </div>
-      
-      <button class="scroll-indicator" aria-label="Scroll down">
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          stroke-width="2" 
-          stroke-linecap="round" 
-          stroke-linejoin="round"
+      <div class="content-wrapper">
+        <div class="player-cards-grid">
+          {#each selectedPlayers as player (player.id)}
+            <PlayerInfoCard {player} onRemove={() => handleRemovePlayer(player.id)} />
+          {/each}
+        </div>
+        
+        <button 
+          class="scroll-indicator" 
+          aria-label="Scroll down to analysis"
+          onclick={scrollToAnalysis}
         >
-          <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
-        </svg>
-      </button>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+          </svg>
+        </button>
+
+        <div class="analysis-section" bind:this={analysisSection}>
+            <div class="analysis-grid columns-{selectedPlayers.length}">
+                {#each selectedPlayers as player}
+                    <div class="analysis-column">
+                        <div class="column-header">
+                            <div class="notched-name-tag">
+                                <span class="player-name">{player.name} {player.surname}</span>
+                            </div>
+                        </div>
+                        <div class="column-content">
+                           </div>
+                    </div>
+                {/each}
+            </div>
+            
+            <div class="central-footer">
+                <button class="plus-button-placeholder" aria-label="Add comparison metric">
+                    +
+                </button>
+            </div>
+        </div>
+      </div>
     {/if}
   </div>
 </div>
@@ -102,13 +130,31 @@
 <style>
   .player-analysis-page {
     width: 100%;
-    min-height: 100%;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    padding: 2rem;
     gap: 2.5rem;
+    justify-content: flex-start;
+    padding-top: 35vh; 
+    transition: padding-top 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .player-analysis-page.has-content {
+    padding-top: 2rem;
+  }
+
+  .content-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .page-header {
@@ -116,18 +162,119 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+    transition: all 0.3s ease;
   }
 
-  /* MODIFICATION ICI : flex-direction: column pour mettre la grille AU-DESSUS du bouton */
   .page-content {
     display: flex;
     flex-direction: column; 
-    justify-content: center;
     align-items: center;
     width: 100%;
     flex: 0 0 auto;
   }
 
+  .analysis-section {
+    width: 100%;
+    max-width: 1400px;
+    min-height: 85vh; 
+    margin-top: 4rem; 
+    display: flex;
+    flex-direction: column;
+    /* Position relative pour gérer le layout interne */
+    position: relative;
+  }
+
+  .analysis-grid {
+      display: grid;
+      width: 100%;
+      flex: 1; /* Prend toute la hauteur disponible moins le footer */
+      min-height: 500px; 
+  }
+
+  .columns-1 { grid-template-columns: 1fr; }
+  .columns-2 { grid-template-columns: 1fr 1fr; }
+  .columns-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .analysis-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      /* Le trait de séparation blanc transparent */
+      border-right: 1px solid rgba(255, 255, 255, 0.2); 
+      padding: 0 1rem;
+  }
+
+  /* Retire le trait pour la dernière colonne */
+  .analysis-column:last-child {
+      border-right: none;
+  }
+
+  .column-header {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+  }
+
+  .notched-name-tag {
+      background: white;
+      color: black;
+      padding: 0.5rem 1.5rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      clip-path: polygon(
+          0 0, 
+          calc(100% - 12px) 0, 
+          100% 12px, 
+          100% 100%, 
+          12px 100%, 
+          0 calc(100% - 12px)
+      );
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .column-content {
+      flex: 1;
+      width: 100%;
+      /* Placeholder pour le contenu futur */
+  }
+
+  /* Footer centré pour le bouton + */
+  .central-footer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+  }
+
+  .plus-button-placeholder {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: white;
+      color: black;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      opacity: 0.9;
+      transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+
+  .plus-button-placeholder:hover {
+      opacity: 1;
+      box-shadow: 0 6px 20px rgba(255,255,255,0.2);
+  }
+
+  /* RESTE DU CSS (Grille de cartes, etc.) */
   .player-cards-grid {
       display: flex;
       gap: 1.5rem;
@@ -147,18 +294,21 @@
       max-width: 350px; 
   }
 
-  /* MODIFICATION ICI : Style pour nettoyer le bouton et l'animer */
   .scroll-indicator {
-      background: transparent; /* Enlève le fond gris du bouton */
-      border: none;            /* Enlève la bordure du bouton */
+      background: transparent;
+      border: none;
       cursor: pointer;
       padding: 0;
-      margin-top: 2rem;        /* Espace entre les cards et la flèche */
-      
+      margin-top: 2rem;
       color: white;
       animation: bounce 2s infinite;
       opacity: 0.8;
-      display: flex;           /* Centre le SVG dans le bouton */
+      display: flex;
+      transition: opacity 0.3s;
+  }
+  
+  .scroll-indicator:hover {
+      opacity: 1;
   }
 
   .scroll-indicator svg {
@@ -167,15 +317,9 @@
   }
 
   @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-      transform: translateY(0);
-    }
-    40% {
-      transform: translateY(-10px);
-    }
-    60% {
-      transform: translateY(-5px);
-    }
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
   }
 
   .loading-state {
@@ -183,7 +327,7 @@
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    padding: 4rem 2rem;
+    margin-top: -2rem; 
     color: rgba(255, 255, 255, 0.7);
   }
 
@@ -197,9 +341,7 @@
   }
 
   @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
   }
 
   .error-state {
@@ -237,15 +379,26 @@
     .player-analysis-page {
       padding: 1rem;
       gap: 2rem;
+      padding-top: 30vh; 
     }
-
+    .player-analysis-page.has-content {
+      padding-top: 1rem;
+    }
     .page-header {
       padding-top: 0.5rem;
     }
-
     .player-cards-grid {
       flex-direction: column;
       align-items: center;
     } 
+    .analysis-grid {
+        grid-template-columns: 1fr !important;
+        gap: 2rem;
+    }
+    .analysis-column {
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        padding-bottom: 2rem;
+    }
   }
 </style>
