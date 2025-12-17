@@ -83,21 +83,25 @@
     height: 100vh;
     background: var(--color-bg-home);
     display: flex;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent any scrolling on the layout itself */
   }
 
   .main-area {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0; /* Allow flex item to shrink below content size */
+    overflow: hidden; /* Contain scroll to main-content only */
   }
 
   /* ===== NAVBAR PRINCIPALE (TABS) ===== */
   .main-navbar {
     background: var(--color-bg-app);
     z-index: 1000;
+    flex-shrink: 0; /* Prevent navbar from shrinking */
     display: flex;
     justify-content: center;
+    align-items: center;
     padding-top: 2rem;
     padding-bottom: 1rem;
     animation: slideDown 0.5s ease-out;
@@ -117,6 +121,8 @@
   .nav-tabs {
     display: flex;
     gap: 1.5rem;
+    align-items: center;
+    justify-content: center;
   }
 
   /* ===== TABS (avec coins coupés) ===== */
@@ -172,7 +178,7 @@
     background: transparent;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     gap: 0.5rem !important;
     padding: 0.5rem !important;
   }
@@ -227,7 +233,7 @@
   .main-content {
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
   }
 
   /* ===== RESPONSIVE ===== */
