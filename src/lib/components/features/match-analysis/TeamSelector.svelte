@@ -9,6 +9,7 @@
     id: string | number;  // Flexible: string ou number
     name: string;
     logoUrl: string;      // URL complète du logo (laisse la gestion au parent)
+    opponents?: (string | number)[]; // IDs des équipes contre qui cette équipe a joué
   }
 
   interface Props {
@@ -49,14 +50,44 @@
   // Au moins une équipe est sélectionnée
   const hasSelection = $derived(homeTeam !== null || awayTeam !== null);
 
-  // Équipes visibles dans le carousel
+  // Équipes filtrées selon l'équipe active et l'équipe déjà sélectionnée
+  const filteredTeams = $derived.by(() => {
+    if (!activeTeam) return availableTeams;
+
+    // Déterminer l'équipe déjà sélectionnée (opposée à activeTeam)
+    const selectedTeam = activeTeam === 'home' ? awayTeam : homeTeam;
+
+    // Si aucune équipe n'est sélectionnée de l'autre côté, montrer toutes les équipes
+    if (!selectedTeam) return availableTeams;
+
+    // Si une équipe est sélectionnée, filtrer pour ne montrer que les équipes qui ont joué contre elle
+    return availableTeams.filter(team => {
+      // Ne pas montrer l'équipe déjà sélectionnée
+      if (team.id === selectedTeam.id) return false;
+
+      // Si l'équipe sélectionnée a une liste d'opponents, filtrer par ça
+      if (selectedTeam.opponents && selectedTeam.opponents.length > 0) {
+        return selectedTeam.opponents.includes(team.id);
+      }
+
+      // Si l'équipe courante a une liste d'opponents, vérifier si elle contient l'équipe sélectionnée
+      if (team.opponents && team.opponents.length > 0) {
+        return team.opponents.includes(selectedTeam.id);
+      }
+
+      // Par défaut, montrer l'équipe
+      return true;
+    });
+  });
+
+  // Équipes visibles dans le carousel (basé sur filteredTeams)
   const visibleTeams = $derived(
-    availableTeams.slice(carouselIndex, carouselIndex + VISIBLE_TEAMS)
+    filteredTeams.slice(carouselIndex, carouselIndex + VISIBLE_TEAMS)
   );
 
   // Peut naviguer vers la gauche/droite
   const canNavigateLeft = $derived(carouselIndex > 0);
-  const canNavigateRight = $derived(carouselIndex + VISIBLE_TEAMS < availableTeams.length);
+  const canNavigateRight = $derived(carouselIndex + VISIBLE_TEAMS < filteredTeams.length);
 
   // Référence au wrapper pour détecter les clics en dehors
   let wrapperRef = $state<HTMLDivElement>();
@@ -80,9 +111,14 @@
 
   function navigateRight() {
     if (canNavigateRight) {
-      carouselIndex = Math.min(availableTeams.length - VISIBLE_TEAMS, carouselIndex + 1);
+      carouselIndex = Math.min(filteredTeams.length - VISIBLE_TEAMS, carouselIndex + 1);
     }
   }
+
+  // Réinitialiser le carouselIndex quand les filteredTeams changent
+  $effect(() => {
+    carouselIndex = 0;
+  });
 
   // Gestion du clic sur le TeamSelector : épingler/dépingler
   function handleClick() {

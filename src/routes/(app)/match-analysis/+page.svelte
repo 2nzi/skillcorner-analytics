@@ -163,23 +163,50 @@
   let homeTeam = $state<Team | null>(null);
   let awayTeam = $state<Team | null>(null);
 
-  // Convertir toutes les équipes disponibles
-  const availableTeams = $derived<Team[]>(
-    data.matches.flatMap(match => [
+  // Convertir toutes les équipes disponibles avec leurs adversaires
+  const availableTeams = $derived.by<Team[]>(() => {
+    // Créer un Map pour stocker les adversaires de chaque équipe
+    const opponentsMap = new Map<number, Set<number>>();
+
+    // Parcourir tous les matchs pour construire la liste des adversaires
+    data.matches.forEach(match => {
+      const homeId = match.home_team.id;
+      const awayId = match.away_team.id;
+
+      // Ajouter away comme adversaire de home
+      if (!opponentsMap.has(homeId)) {
+        opponentsMap.set(homeId, new Set());
+      }
+      opponentsMap.get(homeId)!.add(awayId);
+
+      // Ajouter home comme adversaire de away
+      if (!opponentsMap.has(awayId)) {
+        opponentsMap.set(awayId, new Set());
+      }
+      opponentsMap.get(awayId)!.add(homeId);
+    });
+
+    // Créer la liste des équipes avec leurs adversaires
+    const teams = data.matches.flatMap(match => [
       {
         id: match.home_team.id,
         name: match.home_team.short_name,
-        logoUrl: `/api/team-logo/${match.home_team.id}`
+        logoUrl: `/api/team-logo/${match.home_team.id}`,
+        opponents: Array.from(opponentsMap.get(match.home_team.id) || [])
       },
       {
         id: match.away_team.id,
         name: match.away_team.short_name,
-        logoUrl: `/api/team-logo/${match.away_team.id}`
+        logoUrl: `/api/team-logo/${match.away_team.id}`,
+        opponents: Array.from(opponentsMap.get(match.away_team.id) || [])
       }
-    ]).filter((team, index, self) =>
+    ]);
+
+    // Filtrer les doublons
+    return teams.filter((team, index, self) =>
       index === self.findIndex(t => t.id === team.id)
-    )
-  );
+    );
+  });
 
   // Callbacks pour les changements de sélection
   function handleHomeTeamChange(team: Team | null) {
