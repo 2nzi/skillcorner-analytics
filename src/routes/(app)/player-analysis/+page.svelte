@@ -1,6 +1,8 @@
 <script lang="ts">
   import PlayerSearchBar from '$lib/components/features/player-analysis/PlayerSearchBar.svelte';
   import PlayerInfoCard from '$lib/components/features/player-analysis/PlayerInfoCard.svelte';
+  import PlayerAnalysisFilters from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
+  import type { FilterState } from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
   import { onMount } from 'svelte';
 
   type Player = {
@@ -19,9 +21,27 @@
   let selectedPlayers = $state<Player[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
-  
+  let filtersOpen = $state(false);
+  let currentFilters = $state<FilterState>({
+    selectedClubs: [],
+    timeWindows: [
+      { id: 'current_week', label: 'Week', value: '' },
+      { id: 'current_month', label: 'Month', value: '' },
+      { id: 'current_season', label: 'Year', value: '' }
+    ]
+  });
+
   let analysisSection: HTMLElement;
   const MAX_PLAYERS = 3;
+
+  // Extract unique clubs from players
+  const availableClubs = $derived.by(() => {
+    const clubs = new Set<string>();
+    players.forEach(p => {
+      if (p.team) clubs.add(p.team);
+    });
+    return Array.from(clubs).sort();
+  });
 
   async function loadPlayers() {
     try {
@@ -56,6 +76,16 @@
     if (analysisSection) {
       analysisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  function toggleFilters() {
+    filtersOpen = !filtersOpen;
+  }
+
+  function handleFilterChange(filters: FilterState) {
+    currentFilters = filters;
+    console.log('Filters updated:', filters);
+    // TODO: Apply filters to data/analysis
   }
 
   onMount(() => {
@@ -117,10 +147,23 @@
             </div>
             
             <div class="central-footer">
-                <button class="plus-button-placeholder" aria-label="Add comparison metric">
-                    +
+                <button
+                  class="plus-button {filtersOpen ? 'active' : ''}"
+                  aria-label="Toggle filters"
+                  onclick={toggleFilters}
+                >
+                    {filtersOpen ? '×' : '+'}
                 </button>
             </div>
+        </div>
+
+        <!-- Filters Overlay -->
+        <div class="filters-overlay">
+            <PlayerAnalysisFilters
+              {availableClubs}
+              isOpen={filtersOpen}
+              onFilterChange={handleFilterChange}
+            />
         </div>
       </div>
     {/if}
@@ -141,7 +184,7 @@
   }
 
   .player-analysis-page.has-content {
-    padding-top: 2rem;
+    padding-top: 3rem;
   }
 
   .content-wrapper {
@@ -246,12 +289,27 @@
   .central-footer {
       width: 100%;
       display: flex;
+      align-items: center;
       justify-content: center;
       padding-top: 2rem;
       padding-bottom: 2rem;
   }
 
-  .plus-button-placeholder {
+  /* Filters Overlay */
+  .filters-overlay {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      pointer-events: none;
+  }
+
+  .filters-overlay :global(.filters-container) {
+      pointer-events: auto;
+  }
+
+  .plus-button {
       width: 48px;
       height: 48px;
       border-radius: 50%;
@@ -265,13 +323,26 @@
       font-weight: bold;
       cursor: pointer;
       opacity: 0.9;
-      transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+      transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      z-index: 10;
   }
 
-  .plus-button-placeholder:hover {
+  .plus-button:hover {
       opacity: 1;
       box-shadow: 0 6px 20px rgba(255,255,255,0.2);
+      transform: scale(1.05);
+  }
+
+  .plus-button.active {
+      background: #ff3b30;
+      color: white;
+      transform: rotate(45deg);
+      box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+  }
+
+  .plus-button.active:hover {
+      transform: rotate(45deg) scale(1.05);
   }
 
   /* RESTE DU CSS (Grille de cartes, etc.) */
