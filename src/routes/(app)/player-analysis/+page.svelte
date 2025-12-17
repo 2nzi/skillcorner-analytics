@@ -2,6 +2,7 @@
   import PlayerSearchBar from '$lib/components/features/player-analysis/PlayerSearchBar.svelte';
   import PlayerInfoCard from '$lib/components/features/player-analysis/PlayerInfoCard.svelte';
   import PlayerAnalysisFilters from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
+  import PlayerStatChart from '$lib/components/features/player-analysis/PlayerStatChart.svelte';
   import type { FilterState } from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
   import { onMount } from 'svelte';
 
@@ -141,7 +142,22 @@
                             </div>
                         </div>
                         <div class="column-content">
-                           </div>
+                          <!-- Mock data for POC -->
+                          <PlayerStatChart
+                            title="ON BALL ENGAGEMENTS"
+                            score={64.6}
+                            scoreLabel="PER90 OTP"
+                            segments={[
+                              { label: 'PRESSING', percentage: 42, color: '#1a4d2e' },
+                              { label: 'PRESSURE', percentage: 22, color: '#2d5a3d' },
+                              { label: 'RECOVERY', percentage: 11, color: '#4a7c59' },
+                              { label: 'COUNTER PRESS', percentage: 9, color: '#6fa877' },
+                              { label: 'OTHER', percentage: 16, color: '#a8d5a3' }
+                            ]}
+                            highBlockValue={10.3}
+                            midBlockValue={15.5}
+                          />
+                        </div>
                     </div>
                 {/each}
             </div>
@@ -282,7 +298,11 @@
   .column-content {
       flex: 1;
       width: 100%;
-      /* Placeholder pour le contenu futur */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      padding: 1rem 0;
   }
 
   /* Footer centré pour le bouton + */
