@@ -144,7 +144,7 @@
 
         <div class="analysis-section" bind:this={analysisSection}>
             <div class="analysis-grid columns-{selectedPlayers.length}">
-                {#each selectedPlayers as player}
+                {#each selectedPlayers as player (player.id)}
                     <div class="analysis-column">
                         <div class="column-header">
                             <div class="notched-name-tag">

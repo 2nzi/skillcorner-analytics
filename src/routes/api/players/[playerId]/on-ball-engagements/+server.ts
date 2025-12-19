@@ -17,6 +17,8 @@ interface OnBallEngagementEvent {
   minute_start: number;
   second_start: number;
   duration: number;
+  third_id_start: string;
+  third_id_end: string;
 }
 
 /**
@@ -33,15 +35,19 @@ interface OnBallEngagementStats {
     subtype: string;
     count: number;
     percentage: number;
-    per30Minutes: number;
+    per30OTIP: number;
+    midBlockCount: number;
+    highBlockCount: number;
+    midBlockPer30OTIP: number;
+    highBlockPer30OTIP: number;
   }[];
 
   // Match-level details
   matchStats: {
     matchId: string;
     events: number;
-    minutesPlayed: number;
-    eventsPer30Minutes: number;
+    otipMinutes: number;
+    eventsPer30OTIP: number;
   }[];
 }
 
@@ -70,7 +76,7 @@ export const GET: RequestHandler = async ({ params }) => {
       .map(dirent => dirent.name);
 
     const playerMatchIds: string[] = [];
-    const playerMatchMinutes: Map<string, number> = new Map();
+    const playerMatchOTIPMinutes: Map<string, number> = new Map();
 
     // Find matches where player participated
     for (const matchId of matchIds) {
@@ -86,7 +92,9 @@ export const GET: RequestHandler = async ({ params }) => {
 
         if (playerInMatch) {
           playerMatchIds.push(matchId);
-          playerMatchMinutes.set(matchId, playerInMatch.playing_time.total.minutes_played);
+          // Use minutes_otip (Opponent Team In Possession) for normalization
+          const otipMinutes = playerInMatch.playing_time.total.minutes_otip || 0;
+          playerMatchOTIPMinutes.set(matchId, otipMinutes);
         }
       } catch (error) {
         // Skip matches that can't be read
@@ -107,9 +115,11 @@ export const GET: RequestHandler = async ({ params }) => {
 
     // Now read on-ball engagement events from dynamic_events.csv for each match
     let totalEvents = 0;
-    let totalMinutesPlayed = 0;
+    let totalOTIPMinutes = 0;
     const subtypeCounts: Map<string, number> = new Map();
-    const matchStats: { matchId: string; events: number; minutesPlayed: number; eventsPer30Minutes: number }[] = [];
+    const subtypeMidBlockCounts: Map<string, number> = new Map();
+    const subtypeHighBlockCounts: Map<string, number> = new Map();
+    const matchStats: { matchId: string; events: number; otipMinutes: number; eventsPer30OTIP: number }[] = [];
 
     for (const matchId of playerMatchIds) {
       try {
@@ -127,25 +137,37 @@ export const GET: RequestHandler = async ({ params }) => {
         );
 
         const matchEventsCount = playerOnBallEngagements.length;
-        const matchMinutes = playerMatchMinutes.get(matchId) || 0;
+        const matchOTIPMinutes = playerMatchOTIPMinutes.get(matchId) || 0;
 
-        // Count by subtype
+        // Count by subtype and track third_start_id and third_end_id
         playerOnBallEngagements.forEach(event => {
           const subtype = event.event_subtype || 'unknown';
           subtypeCounts.set(subtype, (subtypeCounts.get(subtype) || 0) + 1);
+
+          // Count mid block (id 2) and high block (id 3) for third_id_start and third_id_end
+          const thirdIdStart = String(event.third_id_start);
+          const thirdIdEnd = String(event.third_id_end);
+
+          if (thirdIdStart === '2' || thirdIdEnd === '2') {
+            subtypeMidBlockCounts.set(subtype, (subtypeMidBlockCounts.get(subtype) || 0) + 1);
+          }
+
+          if (thirdIdStart === '3' || thirdIdEnd === '3') {
+            subtypeHighBlockCounts.set(subtype, (subtypeHighBlockCounts.get(subtype) || 0) + 1);
+          }
         });
 
         totalEvents += matchEventsCount;
-        totalMinutesPlayed += matchMinutes;
+        totalOTIPMinutes += matchOTIPMinutes;
 
-        // Calculate per 30 min for this match
-        const eventsPer30Min = matchMinutes > 0 ? (matchEventsCount / matchMinutes) * 30 : 0;
+        // Calculate per 30 OTIP minutes for this match
+        const eventsPer30OTIP = matchOTIPMinutes > 0 ? (matchEventsCount / matchOTIPMinutes) * 30 : 0;
 
         matchStats.push({
           matchId,
           events: matchEventsCount,
-          minutesPlayed: Math.round(matchMinutes * 10) / 10,
-          eventsPer30Minutes: Math.round(eventsPer30Min * 10) / 10
+          otipMinutes: Math.round(matchOTIPMinutes * 10) / 10,
+          eventsPer30OTIP: Math.round(eventsPer30OTIP * 10) / 10
         });
       } catch (error) {
         console.warn(`Failed to read events for match ${matchId}:`, error);
@@ -153,26 +175,39 @@ export const GET: RequestHandler = async ({ params }) => {
       }
     }
 
-    // Calculate overall events per 30 minutes
-    const eventsPer30Minutes = totalMinutesPlayed > 0
-      ? (totalEvents / totalMinutesPlayed) * 30
+    // Calculate overall events per 30 OTIP minutes
+    const eventsPer30OTIP = totalOTIPMinutes > 0
+      ? (totalEvents / totalOTIPMinutes) * 30
       : 0;
 
-    // Build subtype breakdown
-    const subtypeBreakdown = Array.from(subtypeCounts.entries()).map(([subtype, count]) => ({
-      subtype,
-      count,
-      percentage: Math.round((count / totalEvents) * 100 * 10) / 10,
-      per30Minutes: totalMinutesPlayed > 0
-        ? Math.round((count / totalMinutesPlayed) * 30 * 10) / 10
-        : 0
-    })).sort((a, b) => b.count - a.count); // Sort by count descending
+    // Build subtype breakdown with mid/high block stats
+    const subtypeBreakdown = Array.from(subtypeCounts.entries()).map(([subtype, count]) => {
+      const midBlockCount = subtypeMidBlockCounts.get(subtype) || 0;
+      const highBlockCount = subtypeHighBlockCounts.get(subtype) || 0;
+
+      return {
+        subtype,
+        count,
+        percentage: Math.round((count / totalEvents) * 100 * 10) / 10,
+        per30OTIP: totalOTIPMinutes > 0
+          ? Math.round((count / totalOTIPMinutes) * 30 * 10) / 10
+          : 0,
+        midBlockCount,
+        highBlockCount,
+        midBlockPer30OTIP: totalOTIPMinutes > 0
+          ? Math.round((midBlockCount / totalOTIPMinutes) * 30 * 10) / 10
+          : 0,
+        highBlockPer30OTIP: totalOTIPMinutes > 0
+          ? Math.round((highBlockCount / totalOTIPMinutes) * 30 * 10) / 10
+          : 0
+      };
+    }).sort((a, b) => b.count - a.count); // Sort by count descending
 
     const stats: OnBallEngagementStats = {
       playerId,
       totalEvents,
-      totalMinutesPlayed: Math.round(totalMinutesPlayed * 10) / 10,
-      eventsPer30Minutes: Math.round(eventsPer30Minutes * 10) / 10,
+      totalMinutesPlayed: Math.round(totalOTIPMinutes * 10) / 10,
+      eventsPer30Minutes: Math.round(eventsPer30OTIP * 10) / 10,
       subtypeBreakdown,
       matchStats
     };

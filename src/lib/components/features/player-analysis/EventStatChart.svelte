@@ -6,6 +6,8 @@
     label: string;
     percentage: number;
     color: string;
+    midBlockPer30OTIP?: number;
+    highBlockPer30OTIP?: number;
   }
 
   interface Props {
@@ -26,7 +28,7 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
   let score = $state(0);
-  let scoreLabel = $state('PER30 OBE');
+  let scoreLabel = $state('PER30 OTIP');
   let title = $state('ON BALL ENGAGEMENTS');
   let segments = $state<StatSegment[]>([]);
   let highBlockValue = $state(0);
@@ -43,6 +45,15 @@
       return index >= 0 ? index : internalSelectedIndex;
     }
     return internalSelectedIndex;
+  });
+
+  // Update mid/high block values based on selected segment
+  $effect(() => {
+    if (segments.length > 0 && effectiveSelectedIndex >= 0 && effectiveSelectedIndex < segments.length) {
+      const selectedSegment = segments[effectiveSelectedIndex];
+      midBlockValue = Math.round((selectedSegment.midBlockPer30OTIP || 0) * 10) / 10;
+      highBlockValue = Math.round((selectedSegment.highBlockPer30OTIP || 0) * 10) / 10;
+    }
   });
 
   // Gradient color palette (darkest to lightest green)
@@ -105,7 +116,9 @@
         return {
           label,
           percentage: item.percentage || 0,
-          color: getColorForCategory(label, allCategoryNames)
+          color: getColorForCategory(label, allCategoryNames),
+          midBlockPer30OTIP: item.midBlockPer30OTIP || 0,
+          highBlockPer30OTIP: item.highBlockPer30OTIP || 0
         };
       }) || [];
 
@@ -118,10 +131,11 @@
         return orderA - orderB;
       });
 
-      // TODO: Calculate high block and mid block from phases of play data
-      // For now, set placeholder values
-      highBlockValue = 0;
-      midBlockValue = 0;
+      // Initialize with first segment's mid/high block values
+      if (segments.length > 0) {
+        midBlockValue = Math.round((segments[0].midBlockPer30OTIP || 0) * 10) / 10;
+        highBlockValue = Math.round((segments[0].highBlockPer30OTIP || 0) * 10) / 10;
+      }
 
     } catch (err) {
       console.error('Error loading event data:', err);
@@ -133,6 +147,13 @@
 
   onMount(() => {
     loadEventData();
+  });
+
+  // Reload data when playerId changes
+  $effect(() => {
+    if (playerId) {
+      loadEventData();
+    }
   });
 
   // Handle segment click
@@ -383,12 +404,12 @@
   <!-- Block Values -->
   <div class="block-values">
     <div class="block-item">
-      <div class="block-label">HIGH<br/>BLOCK</div>
-      <div class="block-value">{highBlockValue}</div>
-    </div>
-    <div class="block-item">
       <div class="block-label">MID<br/>BLOCK</div>
       <div class="block-value">{midBlockValue}</div>
+    </div>
+    <div class="block-item">
+      <div class="block-label">HIGH<br/>BLOCK</div>
+      <div class="block-value">{highBlockValue}</div>
     </div>
   </div>
 </div>
