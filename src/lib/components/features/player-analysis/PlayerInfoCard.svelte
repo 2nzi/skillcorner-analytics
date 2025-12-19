@@ -10,7 +10,12 @@
       age: number;
       position: string;
       team?: string;
-      rawValues: Record<string, number>;
+      teamName?: string;
+      matchesPlayed?: number;
+      totalMinutesPlayed?: number;
+      totalGoals?: number;
+      averageMinutesPerMatch?: number;
+      rawValues?: Record<string, number>;
     } | null;
     onRemove?: () => void;
   };
@@ -22,32 +27,34 @@
     console.log('PlayerInfoCard received player:', player);
   });
 
-  // Stats clés à afficher
+  // Stats clés à afficher - utilise les nouvelles données enrichies
   const keyStats = $derived(() => {
     if (!player) return [];
 
     return [
       {
         label: 'Matches',
-        value: player.rawValues['Minutes'] ? Math.round(player.rawValues['Minutes'] / 90) : 0,
+        value: player.matchesPlayed || 0,
         unit: ''
       },
       {
         label: 'Minutes',
-        value: player.rawValues['Minutes'] || 0,
+        value: player.totalMinutesPlayed
+          ? Math.round(player.totalMinutesPlayed)
+          : 0,
         unit: 'min'
       },
       {
-        label: 'Distance',
-        value: player.rawValues['Total distance']
-          ? (player.rawValues['Total distance'] / 1000).toFixed(1)
-          : 0,
-        unit: 'km'
+        label: 'Goals',
+        value: player.totalGoals || 0,
+        unit: ''
       },
       {
-        label: 'Top Speed',
-        value: player.rawValues['PSV99'] || 0,
-        unit: 'km/h'
+        label: 'Avg Min/Match',
+        value: player.averageMinutesPerMatch
+          ? Math.round(player.averageMinutesPerMatch)
+          : 0,
+        unit: 'min'
       }
     ];
   });

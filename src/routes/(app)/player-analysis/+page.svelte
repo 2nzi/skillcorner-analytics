@@ -2,7 +2,7 @@
   import PlayerSearchBar from '$lib/components/features/player-analysis/PlayerSearchBar.svelte';
   import PlayerInfoCard from '$lib/components/features/player-analysis/PlayerInfoCard.svelte';
   import PlayerAnalysisFilters from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
-  import PlayerStatChart from '$lib/components/features/player-analysis/PlayerStatChart.svelte';
+  import EventStatChart from '$lib/components/features/player-analysis/EventStatChart.svelte';
   import type { FilterState } from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
   import { onMount } from 'svelte';
 
@@ -35,6 +35,10 @@
   let analysisSection: HTMLElement;
   const MAX_PLAYERS = 3;
 
+  // Shared state for synchronized chart selection across all players
+  // Use category name instead of index to handle different segment sets per player
+  let sharedSelectedCategory = $state<string | null>(null);
+
   // Extract unique clubs from players
   const availableClubs = $derived.by(() => {
     const clubs = new Set<string>();
@@ -48,10 +52,16 @@
     try {
       loading = true;
       error = null;
-      const response = await fetch('/api/players/aggregates');
+      const response = await fetch('/api/players/enriched');
       if (!response.ok) throw new Error('Failed to load players');
       const data = await response.json();
-      players = data.map((p: any) => ({ ...p, team: p.team_name }));
+      players = data.map((p: any) => ({
+        ...p,
+        team: p.teamName,
+        // Keep compatibility with existing structure
+        scores: {},
+        rawValues: {}
+      }));
     } catch (err) {
       console.error('Error loading players:', err);
       error = err instanceof Error ? err.message : 'Unknown error';
@@ -142,26 +152,27 @@
                             </div>
                         </div>
                         <div class="column-content">
-                          <!-- Mock data for POC -->
-                          <PlayerStatChart
-                            title="ON BALL ENGAGEMENTS"
-                            score={64.6}
-                            scoreLabel="PER90 OTP"
-                            segments={[
-                              { label: 'PRESSING', percentage: 42, color: '#1a4d2e' },
-                              { label: 'PRESSURE', percentage: 22, color: '#2d5a3d' },
-                              { label: 'RECOVERY', percentage: 11, color: '#4a7c59' },
-                              { label: 'COUNTER PRESS', percentage: 9, color: '#6fa877' },
-                              { label: 'OTHER', percentage: 16, color: '#a8d5a3' }
-                            ]}
-                            highBlockValue={10.3}
-                            midBlockValue={15.5}
+                          <!-- Event stats chart with real data -->
+                          <EventStatChart
+                            playerId={player.playerId}
+                            eventType="on-ball-engagements"
+                            selectedCategory={sharedSelectedCategory}
+                            onCategorySelect={(category) => { sharedSelectedCategory = category; }}
                           />
                         </div>
                     </div>
                 {/each}
             </div>
             
+            <!-- Filters Overlay -->
+            <div class="filters-overlay">
+                <PlayerAnalysisFilters
+                  {availableClubs}
+                  isOpen={filtersOpen}
+                  onFilterChange={handleFilterChange}
+                />
+            </div>
+
             <div class="central-footer">
                 <button
                   class="plus-button {filtersOpen ? 'active' : ''}"
@@ -171,15 +182,6 @@
                     {filtersOpen ? '×' : '+'}
                 </button>
             </div>
-        </div>
-
-        <!-- Filters Overlay -->
-        <div class="filters-overlay">
-            <PlayerAnalysisFilters
-              {availableClubs}
-              isOpen={filtersOpen}
-              onFilterChange={handleFilterChange}
-            />
         </div>
       </div>
     {/if}
@@ -307,20 +309,25 @@
 
   /* Footer centré pour le bouton + */
   .central-footer {
+      position: sticky;
+      bottom: 0;
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding-top: 2rem;
-      padding-bottom: 2rem;
+      padding: 1rem 0;
+      background: transparent;
+      z-index: 50;
   }
 
   /* Filters Overlay */
   .filters-overlay {
-      position: fixed;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
+      position: sticky;
+      bottom: 80px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       z-index: 100;
       pointer-events: none;
   }
