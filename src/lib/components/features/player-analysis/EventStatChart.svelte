@@ -8,6 +8,9 @@
     color: string;
     midBlockPer30OTIP?: number;
     highBlockPer30OTIP?: number;
+    forceBackwardPercentage?: number;
+    affectedLineBreakPercentage?: number;
+    regainPercentage?: number;
   }
 
   interface Props {
@@ -15,10 +18,20 @@
     eventType?: string;
     selectedCategory?: string | null;
     onCategorySelect?: (category: string) => void;
-    onStatsUpdate?: (stats: { score: number; midBlock: number; highBlock: number }) => void;
+    onStatsUpdate?: (stats: {
+      score: number;
+      midBlock: number;
+      highBlock: number;
+      forceBackward: number;
+      affectedLineBreak: number;
+      regain: number;
+    }) => void;
     isBestScore?: boolean;
     isBestMidBlock?: boolean;
     isBestHighBlock?: boolean;
+    isBestForceBackward?: boolean;
+    isBestAffectedLineBreak?: boolean;
+    isBestRegain?: boolean;
   }
 
   let {
@@ -29,7 +42,10 @@
     onStatsUpdate,
     isBestScore = false,
     isBestMidBlock = false,
-    isBestHighBlock = false
+    isBestHighBlock = false,
+    isBestForceBackward = false,
+    isBestAffectedLineBreak = false,
+    isBestRegain = false
   }: Props = $props();
 
   // State for loading data
@@ -41,6 +57,9 @@
   let segments = $state<StatSegment[]>([]);
   let highBlockValue = $state(0);
   let midBlockValue = $state(0);
+  let forceBackwardValue = $state(0);
+  let affectedLineBreakValue = $state(0);
+  let regainValue = $state(0);
   let internalSelectedIndex = $state(0); // Internal state when not controlled
   let rotationAngle = $state(0); // Current rotation angle
   let isRotating = $state(false); // Animation state
@@ -62,10 +81,22 @@
       midBlockValue = Math.round((selectedSegment.midBlockPer30OTIP || 0) * 10) / 10;
       highBlockValue = Math.round((selectedSegment.highBlockPer30OTIP || 0) * 10) / 10;
 
+      // Update new metrics (percentages)
+      forceBackwardValue = Math.round((selectedSegment.forceBackwardPercentage || 0) * 10) / 10;
+      affectedLineBreakValue = Math.round((selectedSegment.affectedLineBreakPercentage || 0) * 10) / 10;
+      regainValue = Math.round((selectedSegment.regainPercentage || 0) * 10) / 10;
+
       // Notify parent of stats update - use untrack to prevent infinite loops
       untrack(() => {
         if (onStatsUpdate) {
-          onStatsUpdate({ score, midBlock: midBlockValue, highBlock: highBlockValue });
+          onStatsUpdate({
+            score,
+            midBlock: midBlockValue,
+            highBlock: highBlockValue,
+            forceBackward: forceBackwardValue,
+            affectedLineBreak: affectedLineBreakValue,
+            regain: regainValue
+          });
         }
       });
     }
@@ -134,7 +165,10 @@
           percentage: item.percentage || 0,
           color: getColorForCategory(label, allCategoryNames),
           midBlockPer30OTIP: item.midBlockPer30OTIP || 0,
-          highBlockPer30OTIP: item.highBlockPer30OTIP || 0
+          highBlockPer30OTIP: item.highBlockPer30OTIP || 0,
+          forceBackwardPercentage: item.forceBackwardPercentage || 0,
+          affectedLineBreakPercentage: item.affectedLineBreakPercentage || 0,
+          regainPercentage: item.regainPercentage || 0
         };
       }) || [];
 
@@ -322,7 +356,7 @@
     <NotchedBox
       backgroundColor="#3FFE69"
       borderColor="transparent"
-      padding="0.75rem 2rem"
+      padding="0.5rem 1.5rem"
       notchedCorners={{ topRight: true, bottomLeft: true }}
     >
       <div class="score-content">
@@ -458,6 +492,22 @@
       <div class="block-value">{highBlockValue}</div>
     </div>
   </div>
+
+  <!-- Additional Metrics -->
+  <div class="additional-metrics">
+    <div class="metric-item {isBestForceBackward ? 'best-value' : ''}">
+      <div class="metric-label">FORCED<br/>BACKWARDS</div>
+      <div class="metric-value">{forceBackwardValue}%</div>
+    </div>
+    <div class="metric-item {isBestAffectedLineBreak ? 'best-value' : ''}">
+      <div class="metric-label">AFFECTED<br/>LINE BREAK</div>
+      <div class="metric-value">{affectedLineBreakValue}%</div>
+    </div>
+    <div class="metric-item {isBestRegain ? 'best-value' : ''}">
+      <div class="metric-label">REGAIN</div>
+      <div class="metric-value">{regainValue}%</div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -465,7 +515,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
     padding: 0.5rem;
     width: 100%;
     max-width: 300px;
@@ -487,7 +536,7 @@
   }
 
   .score-value {
-    font-size: 2rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: black;
     line-height: 1;
@@ -557,7 +606,7 @@
   .branches-container {
     width: 100%;
     max-width: 300px;
-    margin-top: -1.5rem;
+    margin-top: -1rem;
     margin-bottom: -0.5rem;
   }
 
@@ -599,6 +648,46 @@
   }
 
   .block-item.best-value .block-value {
+    color: #5FEA5F;
+  }
+
+  .additional-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+    padding: 0 1rem;
+    margin-top: 1rem;
+  }
+
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .metric-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    line-height: 1.2;
+    min-height: 2.4em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .metric-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .metric-item.best-value .metric-value {
     color: #5FEA5F;
   }
 

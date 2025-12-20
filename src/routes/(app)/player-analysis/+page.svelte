@@ -1,9 +1,7 @@
 <script lang="ts">
   import PlayerSearchBar from '$lib/components/features/player-analysis/PlayerSearchBar.svelte';
   import PlayerInfoCard from '$lib/components/features/player-analysis/PlayerInfoCard.svelte';
-  import PlayerAnalysisFilters from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
   import EventStatChart from '$lib/components/features/player-analysis/EventStatChart.svelte';
-  import type { FilterState } from '$lib/components/features/player-analysis/PlayerAnalysisFilters.svelte';
   import { onMount } from 'svelte';
 
   type Player = {
@@ -23,14 +21,7 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
   let filtersOpen = $state(false);
-  let currentFilters = $state<FilterState>({
-    selectedClubs: [],
-    timeWindows: [
-      { id: 'current_week', label: 'Week', value: '' },
-      { id: 'current_month', label: 'Month', value: '' },
-      { id: 'current_season', label: 'Year', value: '' }
-    ]
-  });
+
 
   let analysisSection: HTMLElement;
   const MAX_PLAYERS = 3;
@@ -46,27 +37,54 @@
   let sharedSelectedCategory = $state<string | null>(null);
 
   // State to track player stats for comparison
-  let playerStats = $state<Map<string, { score: number; midBlock: number; highBlock: number }>>(new Map());
+  let playerStats = $state<Map<string, {
+    score: number;
+    midBlock: number;
+    highBlock: number;
+    forceBackward: number;
+    affectedLineBreak: number;
+    regain: number;
+  }>>(new Map());
 
   // Calculate best values across all displayed players
   const bestValues = $derived.by(() => {
     if (playerStats.size === 0) {
-      return { score: 0, midBlock: 0, highBlock: 0 };
+      return {
+        score: 0,
+        midBlock: 0,
+        highBlock: 0,
+        forceBackward: 0,
+        affectedLineBreak: 0,
+        regain: 0
+      };
     }
 
     const scores = Array.from(playerStats.values()).map(s => s.score);
     const midBlocks = Array.from(playerStats.values()).map(s => s.midBlock);
     const highBlocks = Array.from(playerStats.values()).map(s => s.highBlock);
+    const forceBackwards = Array.from(playerStats.values()).map(s => s.forceBackward);
+    const affectedLineBreaks = Array.from(playerStats.values()).map(s => s.affectedLineBreak);
+    const regains = Array.from(playerStats.values()).map(s => s.regain);
 
     return {
       score: Math.max(...scores),
       midBlock: Math.max(...midBlocks),
-      highBlock: Math.max(...highBlocks)
+      highBlock: Math.max(...highBlocks),
+      forceBackward: Math.max(...forceBackwards),
+      affectedLineBreak: Math.max(...affectedLineBreaks),
+      regain: Math.max(...regains)
     };
   });
 
   // Function to update player stats
-  function updatePlayerStats(playerId: string, stats: { score: number; midBlock: number; highBlock: number }) {
+  function updatePlayerStats(playerId: string, stats: {
+    score: number;
+    midBlock: number;
+    highBlock: number;
+    forceBackward: number;
+    affectedLineBreak: number;
+    regain: number;
+  }) {
     playerStats.set(playerId, stats);
     // Force reactivity by creating a new Map
     playerStats = new Map(playerStats);
@@ -149,15 +167,7 @@
     }
   }
 
-  function toggleFilters() {
-    filtersOpen = !filtersOpen;
-  }
 
-  function handleFilterChange(filters: FilterState) {
-    currentFilters = filters;
-    console.log('Filters updated:', filters);
-    // TODO: Apply filters to data/analysis
-  }
 
   onMount(() => {
     loadEventTypes();
@@ -176,10 +186,7 @@
 
   <div class="page-content">
     {#if loading}
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading players...</p>
-      </div>
+      <p></p>
     {:else if error}
       <div class="error-state">
         <p class="error-message">{error}</p>
@@ -224,6 +231,9 @@
                               isBestScore={playerStats.get(player.playerId)?.score === bestValues.score && bestValues.score > 0}
                               isBestMidBlock={playerStats.get(player.playerId)?.midBlock === bestValues.midBlock && bestValues.midBlock > 0}
                               isBestHighBlock={playerStats.get(player.playerId)?.highBlock === bestValues.highBlock && bestValues.highBlock > 0}
+                              isBestForceBackward={playerStats.get(player.playerId)?.forceBackward === bestValues.forceBackward && bestValues.forceBackward > 0}
+                              isBestAffectedLineBreak={playerStats.get(player.playerId)?.affectedLineBreak === bestValues.affectedLineBreak && bestValues.affectedLineBreak > 0}
+                              isBestRegain={playerStats.get(player.playerId)?.regain === bestValues.regain && bestValues.regain > 0}
                             />
                           {/if}
                         </div>
@@ -576,8 +586,7 @@
     padding: 1rem;
     position: sticky;
     bottom: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 50%, transparent 100%);
-    backdrop-filter: blur(8px);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 10%, rgba(0, 0, 0, 0.6) 45%, transparent 100%);
     z-index: 100;
   }
 

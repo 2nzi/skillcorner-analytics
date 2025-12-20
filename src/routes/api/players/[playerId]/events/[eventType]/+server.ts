@@ -19,6 +19,9 @@ interface DynamicEvent {
   duration: number;
   third_id_start: string;
   third_id_end: string;
+  force_backward: string | boolean;
+  affected_line_break: string | null;
+  pressing_chain_end_type: string | null;
 }
 
 /**
@@ -41,6 +44,12 @@ interface EventStats {
     highBlockCount: number;
     midBlockPer30OTIP: number;
     highBlockPer30OTIP: number;
+    forceBackwardCount: number;
+    forceBackwardPercentage: number;
+    affectedLineBreakCount: number;
+    affectedLineBreakPercentage: number;
+    regainCount: number;
+    regainPercentage: number;
   }[];
 
   // Match-level details
@@ -121,6 +130,9 @@ export const GET: RequestHandler = async ({ params }) => {
     const subtypeCounts: Map<string, number> = new Map();
     const subtypeMidBlockCounts: Map<string, number> = new Map();
     const subtypeHighBlockCounts: Map<string, number> = new Map();
+    const subtypeForceBackwardCounts: Map<string, number> = new Map();
+    const subtypeAffectedLineBreakCounts: Map<string, number> = new Map();
+    const subtypeRegainCounts: Map<string, number> = new Map();
     const matchStats: { matchId: string; events: number; otipMinutes: number; eventsPer30OTIP: number }[] = [];
 
     for (const matchId of playerMatchIds) {
@@ -157,6 +169,24 @@ export const GET: RequestHandler = async ({ params }) => {
           if (thirdIdStart === '3' || thirdIdEnd === '3') {
             subtypeHighBlockCounts.set(subtype, (subtypeHighBlockCounts.get(subtype) || 0) + 1);
           }
+
+          // Count force_backward (True or true)
+          if (event.force_backward === true || event.force_backward === 'True' || event.force_backward === 'true') {
+            subtypeForceBackwardCounts.set(subtype, (subtypeForceBackwardCounts.get(subtype) || 0) + 1);
+          }
+
+          // Count affected_line_break (not None/NA/null/empty)
+          if (event.affected_line_break &&
+              event.affected_line_break !== 'None' &&
+              event.affected_line_break !== 'NA' &&
+              event.affected_line_break !== '') {
+            subtypeAffectedLineBreakCounts.set(subtype, (subtypeAffectedLineBreakCounts.get(subtype) || 0) + 1);
+          }
+
+          // Count regain (pressing_chain_end_type === "regain")
+          if (event.pressing_chain_end_type === 'regain') {
+            subtypeRegainCounts.set(subtype, (subtypeRegainCounts.get(subtype) || 0) + 1);
+          }
         });
 
         totalEvents += matchEventsCount;
@@ -186,6 +216,9 @@ export const GET: RequestHandler = async ({ params }) => {
     const subtypeBreakdown = Array.from(subtypeCounts.entries()).map(([subtype, count]) => {
       const midBlockCount = subtypeMidBlockCounts.get(subtype) || 0;
       const highBlockCount = subtypeHighBlockCounts.get(subtype) || 0;
+      const forceBackwardCount = subtypeForceBackwardCounts.get(subtype) || 0;
+      const affectedLineBreakCount = subtypeAffectedLineBreakCounts.get(subtype) || 0;
+      const regainCount = subtypeRegainCounts.get(subtype) || 0;
 
       return {
         subtype,
@@ -201,6 +234,18 @@ export const GET: RequestHandler = async ({ params }) => {
           : 0,
         highBlockPer30OTIP: totalOTIPMinutes > 0
           ? Math.round((highBlockCount / totalOTIPMinutes) * 30 * 10) / 10
+          : 0,
+        forceBackwardCount,
+        forceBackwardPercentage: count > 0
+          ? Math.round((forceBackwardCount / count) * 100 * 10) / 10
+          : 0,
+        affectedLineBreakCount,
+        affectedLineBreakPercentage: count > 0
+          ? Math.round((affectedLineBreakCount / count) * 100 * 10) / 10
+          : 0,
+        regainCount,
+        regainPercentage: count > 0
+          ? Math.round((regainCount / count) * 100 * 10) / 10
           : 0
       };
     }).sort((a, b) => b.count - a.count); // Sort by count descending
