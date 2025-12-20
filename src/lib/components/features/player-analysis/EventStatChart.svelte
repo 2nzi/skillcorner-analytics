@@ -1,6 +1,6 @@
 <script lang="ts">
   import NotchedBox from '$lib/components/ui/NotchedBox.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   interface StatSegment {
     label: string;
@@ -15,13 +15,21 @@
     eventType?: string;
     selectedCategory?: string | null;
     onCategorySelect?: (category: string) => void;
+    onStatsUpdate?: (stats: { score: number; midBlock: number; highBlock: number }) => void;
+    isBestScore?: boolean;
+    isBestMidBlock?: boolean;
+    isBestHighBlock?: boolean;
   }
 
   let {
     playerId,
     eventType = 'on-ball-engagements',
     selectedCategory,
-    onCategorySelect
+    onCategorySelect,
+    onStatsUpdate,
+    isBestScore = false,
+    isBestMidBlock = false,
+    isBestHighBlock = false
   }: Props = $props();
 
   // State for loading data
@@ -53,6 +61,13 @@
       const selectedSegment = segments[effectiveSelectedIndex];
       midBlockValue = Math.round((selectedSegment.midBlockPer30OTIP || 0) * 10) / 10;
       highBlockValue = Math.round((selectedSegment.highBlockPer30OTIP || 0) * 10) / 10;
+
+      // Notify parent of stats update - use untrack to prevent infinite loops
+      untrack(() => {
+        if (onStatsUpdate) {
+          onStatsUpdate({ score, midBlock: midBlockValue, highBlock: highBlockValue });
+        }
+      });
     }
   });
 
@@ -305,7 +320,7 @@
       notchedCorners={{ topRight: true, bottomLeft: true }}
     >
       <div class="score-content">
-        <div class="score-value">{score}</div>
+        <div class="score-value {isBestScore ? 'best-value' : ''}">{score}</div>
         <div class="score-label">{scoreLabel}</div>
       </div>
     </NotchedBox>
@@ -397,17 +412,43 @@
       </g>
 
       <!-- Center white circle (non-rotating, on top) -->
-      <circle cx="120" cy="120" r="35" fill="white" />
-    </svg>
+      <circle cx="120" cy="120" r="20" fill="white" />
+      <circle cx="120" cy="120" r="35" fill="white" fill-opacity="0.5" />    </svg>
   </div>
+
+  <!-- Connecting branches from pie chart to blocks -->
+  {#if segments.length > 0}
+    {@const selectedColor = effectiveSelectedIndex >= 0 && effectiveSelectedIndex < segments.length
+      ? segments[effectiveSelectedIndex].color
+      : '#50CA54'}
+
+    <div class="branches-container">
+      <svg viewBox="0 0 300 60" class="branches-svg">
+        <!-- Main vertical line from bottom of pie chart -->
+        <line x1="150" y1="0" x2="150" y2="20" stroke={selectedColor} stroke-width="4" />
+
+        <!-- Horizontal left branch (extended to the edge) -->
+        <line x1="150" y1="20" x2="20" y2="20" stroke={selectedColor} stroke-width="4" />
+
+        <!-- Horizontal right branch (extended to the edge) -->
+        <line x1="150" y1="20" x2="280" y2="20" stroke={selectedColor} stroke-width="4" />
+
+        <!-- Vertical line at left end (shorter) -->
+        <line x1="20" y1="18" x2="20" y2="60" stroke={selectedColor} stroke-width="4" />
+
+        <!-- Vertical line at right end (shorter) -->
+        <line x1="280" y1="18" x2="280" y2="60" stroke={selectedColor} stroke-width="4" />
+      </svg>
+    </div>
+  {/if}
 
   <!-- Block Values -->
   <div class="block-values">
-    <div class="block-item">
+    <div class="block-item {isBestMidBlock ? 'best-value' : ''}">
       <div class="block-label">MID<br/>BLOCK</div>
       <div class="block-value">{midBlockValue}</div>
     </div>
-    <div class="block-item">
+    <div class="block-item {isBestHighBlock ? 'best-value' : ''}">
       <div class="block-label">HIGH<br/>BLOCK</div>
       <div class="block-value">{highBlockValue}</div>
     </div>
@@ -419,8 +460,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
-    padding: 1rem;
+    gap: 0.5rem;
+    padding: 0.5rem;
     width: 100%;
     max-width: 300px;
   }
@@ -429,7 +470,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
     width: 100%;
   }
 
@@ -517,6 +558,18 @@
     pointer-events: none;
   }
 
+  .branches-container {
+    width: 100%;
+    max-width: 300px;
+    margin-top: -1.5rem;
+    margin-bottom: -0.5rem;
+  }
+
+  .branches-svg {
+    width: 100%;
+    height: auto;
+  }
+
   .block-values {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -546,6 +599,10 @@
     font-size: 2rem;
     font-weight: 700;
     color: white;
+  }
+
+  .block-item.best-value .block-value {
+    color: #5FEA5F;
   }
 
   /* Responsive */

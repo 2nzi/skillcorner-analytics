@@ -39,6 +39,33 @@
   // Use category name instead of index to handle different segment sets per player
   let sharedSelectedCategory = $state<string | null>(null);
 
+  // State to track player stats for comparison
+  let playerStats = $state<Map<string, { score: number; midBlock: number; highBlock: number }>>(new Map());
+
+  // Calculate best values across all displayed players
+  const bestValues = $derived.by(() => {
+    if (playerStats.size === 0) {
+      return { score: 0, midBlock: 0, highBlock: 0 };
+    }
+
+    const scores = Array.from(playerStats.values()).map(s => s.score);
+    const midBlocks = Array.from(playerStats.values()).map(s => s.midBlock);
+    const highBlocks = Array.from(playerStats.values()).map(s => s.highBlock);
+
+    return {
+      score: Math.max(...scores),
+      midBlock: Math.max(...midBlocks),
+      highBlock: Math.max(...highBlocks)
+    };
+  });
+
+  // Function to update player stats
+  function updatePlayerStats(playerId: string, stats: { score: number; midBlock: number; highBlock: number }) {
+    playerStats.set(playerId, stats);
+    // Force reactivity by creating a new Map
+    playerStats = new Map(playerStats);
+  }
+
   // Extract unique clubs from players
   const availableClubs = $derived.by(() => {
     const clubs = new Set<string>();
@@ -81,6 +108,9 @@
 
   function handleRemovePlayer(playerId: string) {
     selectedPlayers = selectedPlayers.filter(p => p.id !== playerId);
+    // Remove player stats when removed
+    playerStats.delete(playerId);
+    playerStats = new Map(playerStats);
   }
 
   function scrollToAnalysis() {
@@ -158,29 +188,14 @@
                             eventType="on-ball-engagements"
                             selectedCategory={sharedSelectedCategory}
                             onCategorySelect={(category) => { sharedSelectedCategory = category; }}
+                            onStatsUpdate={(stats) => updatePlayerStats(player.playerId, stats)}
+                            isBestScore={playerStats.get(player.playerId)?.score === bestValues.score && bestValues.score > 0}
+                            isBestMidBlock={playerStats.get(player.playerId)?.midBlock === bestValues.midBlock && bestValues.midBlock > 0}
+                            isBestHighBlock={playerStats.get(player.playerId)?.highBlock === bestValues.highBlock && bestValues.highBlock > 0}
                           />
                         </div>
                     </div>
                 {/each}
-            </div>
-            
-            <!-- Filters Overlay -->
-            <div class="filters-overlay">
-                <PlayerAnalysisFilters
-                  {availableClubs}
-                  isOpen={filtersOpen}
-                  onFilterChange={handleFilterChange}
-                />
-            </div>
-
-            <div class="central-footer">
-                <button
-                  class="plus-button {filtersOpen ? 'active' : ''}"
-                  aria-label="Toggle filters"
-                  onclick={toggleFilters}
-                >
-                    {filtersOpen ? '×' : '+'}
-                </button>
             </div>
         </div>
       </div>
@@ -275,7 +290,7 @@
       width: 100%;
       display: flex;
       justify-content: center;
-      margin-bottom: 2rem;
+      margin-bottom: 0.5rem;
   }
 
   .notched-name-tag {
@@ -287,11 +302,11 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       clip-path: polygon(
-          0 0, 
-          calc(100% - 12px) 0, 
-          100% 12px, 
-          100% 100%, 
-          12px 100%, 
+          0 0,
+          calc(100% - 12px) 0,
+          100% 12px,
+          100% 100%,
+          12px 100%,
           0 calc(100% - 12px)
       );
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -303,8 +318,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2rem;
-      padding: 1rem 0;
+      gap: 0.5rem;
+      padding: 0;
   }
 
   /* Footer centré pour le bouton + */
