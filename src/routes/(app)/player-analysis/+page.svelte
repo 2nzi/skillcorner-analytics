@@ -35,6 +35,12 @@
   let analysisSection: HTMLElement;
   const MAX_PLAYERS = 3;
 
+  // Available event types (loaded from API)
+  let eventTypes = $state<{ id: string; label: string }[]>([]);
+  let currentEventTypeIndex = $state(0);
+  let isHoveringEventType = $state(false);
+  let eventTypesLoading = $state(true);
+
   // Shared state for synchronized chart selection across all players
   // Use category name instead of index to handle different segment sets per player
   let sharedSelectedCategory = $state<string | null>(null);
@@ -74,6 +80,30 @@
     });
     return Array.from(clubs).sort();
   });
+
+  async function loadEventTypes() {
+    try {
+      eventTypesLoading = true;
+      const response = await fetch('/api/event-types');
+      if (!response.ok) throw new Error('Failed to load event types');
+      const types = await response.json();
+
+      // Ensure "on_ball_engagement" is first in the list
+      const onBallIndex = types.findIndex((t: any) => t.id === 'on_ball_engagement');
+      if (onBallIndex > 0) {
+        const onBall = types.splice(onBallIndex, 1)[0];
+        types.unshift(onBall);
+      }
+
+      eventTypes = types;
+    } catch (err) {
+      console.error('Error loading event types:', err);
+      // Fallback to on-ball-engagement if API fails
+      eventTypes = [{ id: 'on_ball_engagement', label: 'ON BALL ENGAGEMENT' }];
+    } finally {
+      eventTypesLoading = false;
+    }
+  }
 
   async function loadPlayers() {
     try {
@@ -130,6 +160,7 @@
   }
 
   onMount(() => {
+    loadEventTypes();
     loadPlayers();
   });
 </script>
@@ -183,21 +214,69 @@
                         </div>
                         <div class="column-content">
                           <!-- Event stats chart with real data -->
-                          <EventStatChart
-                            playerId={player.playerId}
-                            eventType="on-ball-engagements"
-                            selectedCategory={sharedSelectedCategory}
-                            onCategorySelect={(category) => { sharedSelectedCategory = category; }}
-                            onStatsUpdate={(stats) => updatePlayerStats(player.playerId, stats)}
-                            isBestScore={playerStats.get(player.playerId)?.score === bestValues.score && bestValues.score > 0}
-                            isBestMidBlock={playerStats.get(player.playerId)?.midBlock === bestValues.midBlock && bestValues.midBlock > 0}
-                            isBestHighBlock={playerStats.get(player.playerId)?.highBlock === bestValues.highBlock && bestValues.highBlock > 0}
-                          />
+                          {#if eventTypes.length > 0}
+                            <EventStatChart
+                              playerId={player.playerId}
+                              eventType={eventTypes[currentEventTypeIndex].id}
+                              selectedCategory={sharedSelectedCategory}
+                              onCategorySelect={(category) => { sharedSelectedCategory = category; }}
+                              onStatsUpdate={(stats) => updatePlayerStats(player.playerId, stats)}
+                              isBestScore={playerStats.get(player.playerId)?.score === bestValues.score && bestValues.score > 0}
+                              isBestMidBlock={playerStats.get(player.playerId)?.midBlock === bestValues.midBlock && bestValues.midBlock > 0}
+                              isBestHighBlock={playerStats.get(player.playerId)?.highBlock === bestValues.highBlock && bestValues.highBlock > 0}
+                            />
+                          {/if}
                         </div>
                     </div>
                 {/each}
             </div>
         </div>
+
+        <!-- Event Type Navigator - Sticky at bottom -->
+        {#if eventTypes.length > 0}
+          <div
+            class="event-type-navigator"
+            role="toolbar"
+            aria-label="Event type navigation"
+            tabindex="0"
+            onmouseenter={() => { isHoveringEventType = true; }}
+            onmouseleave={() => { isHoveringEventType = false; }}
+          >
+            {#if isHoveringEventType}
+              {@const prevIndex = currentEventTypeIndex === 0 ? eventTypes.length - 1 : currentEventTypeIndex - 1}
+              <button
+                class="nav-arrow nav-left"
+                onclick={() => {
+                  currentEventTypeIndex = prevIndex;
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                <span class="nav-label">{eventTypes[prevIndex].label}</span>
+              </button>
+            {/if}
+
+            <div class="current-event-type">
+              {eventTypes[currentEventTypeIndex].label}
+            </div>
+
+            {#if isHoveringEventType}
+              {@const nextIndex = currentEventTypeIndex === eventTypes.length - 1 ? 0 : currentEventTypeIndex + 1}
+              <button
+                class="nav-arrow nav-right"
+                onclick={() => {
+                  currentEventTypeIndex = nextIndex;
+                }}
+              >
+                <span class="nav-label">{eventTypes[nextIndex].label}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </button>
+            {/if}
+          </div>
+        {/if}
       </div>
     {/if}
   </div>
@@ -440,7 +519,6 @@
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    margin-top: -2rem; 
     color: rgba(255, 255, 255, 0.7);
   }
 
@@ -486,6 +564,71 @@
   .retry-button:hover {
     background: color-mix(in srgb, var(--color-pysport-blue) 80%, white);
     transform: translateY(-2px);
+  }
+
+  /* Event Type Navigator */
+  .event-type-navigator {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 50%, transparent 100%);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  .current-event-type {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+  }
+
+  .nav-arrow {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    position: absolute;
+  }
+
+  .nav-arrow:hover {
+    color: white;
+    transform: scale(1.05);
+  }
+
+  .nav-arrow svg {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+
+  .nav-label {
+    white-space: nowrap;
+  }
+
+  .nav-left {
+    right: calc(50% + 8rem);
+  }
+
+  .nav-right {
+    left: calc(50% + 8rem);
   }
 
   @media (max-width: 768px) {

@@ -112,7 +112,8 @@
       loading = true;
       error = null;
 
-      const response = await fetch(`/api/players/${playerId}/${eventType}`);
+      // Use the generic events endpoint
+      const response = await fetch(`/api/players/${playerId}/events/${eventType}`);
       if (!response.ok) throw new Error('Failed to load event data');
 
       const data = await response.json();
@@ -150,6 +151,11 @@
       if (segments.length > 0) {
         midBlockValue = Math.round((segments[0].midBlockPer30OTIP || 0) * 10) / 10;
         highBlockValue = Math.round((segments[0].highBlockPer30OTIP || 0) * 10) / 10;
+
+        // Position the first segment at the bottom by default
+        const firstSegmentAngle = (segments[0].percentage / 100) * 360;
+        const firstSegmentMidpoint = firstSegmentAngle / 2;
+        rotationAngle = 180 - firstSegmentMidpoint;
       }
 
     } catch (err) {
@@ -324,7 +330,6 @@
         <div class="score-label">{scoreLabel}</div>
       </div>
     </NotchedBox>
-    <div class="chart-title">{title}</div>
   </div>
 
   <!-- Pie Chart -->
@@ -496,15 +501,6 @@
     letter-spacing: 0.05em;
   }
 
-  .chart-title {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-align: center;
-  }
-
   .chart-container-wrapper {
     width: 100%;
     max-width: 240px;
@@ -576,6 +572,7 @@
     gap: 2rem;
     width: 100%;
     padding: 0 1rem;
+    margin-top: -25px;
   }
 
   .block-item {
