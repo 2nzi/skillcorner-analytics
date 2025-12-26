@@ -1,5 +1,6 @@
 <script lang="ts">
   import NotchedBox from '$lib/components/ui/NotchedBox.svelte';
+  import UnderDevelopment from '$lib/components/features/player-analysis/UnderDevelopment.svelte';
   import { onMount, untrack } from 'svelte';
 
   interface StatSegment {
@@ -64,6 +65,11 @@
   let rotationAngle = $state(0); // Current rotation angle
   let isRotating = $state(false); // Animation state
   let previousExternalCategory = $state<string | null>(null); // Track previous external value
+
+  // Check if event type is under development
+  const isUnderDevelopment = $derived(
+    eventType === 'player_possession' || eventType === 'passing_option'
+  );
 
   // Calculate effective selected index based on category name
   const effectiveSelectedIndex = $derived.by(() => {
@@ -350,6 +356,9 @@
   });
 </script>
 
+{#if isUnderDevelopment}
+  <UnderDevelopment />
+{:else}
 <div class="stat-chart">
   <!-- Score Display -->
   <div class="score-section">
@@ -509,6 +518,7 @@
     </div>
   </div>
 </div>
+{/if}
 
 <style>
   .stat-chart {

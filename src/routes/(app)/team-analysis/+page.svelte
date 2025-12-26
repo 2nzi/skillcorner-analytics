@@ -1,26 +1,17 @@
-<div class="team-analysis-placeholder">
-  <h1>Team Analysis</h1>
-  <p>Cette page sera développée prochainement.</p>
+<script lang="ts">
+  import TeamPerformanceScatter from '$lib/components/features/team-analysis/TeamPerformanceScatter.svelte';
+</script>
+
+<div class="team-analysis-page">
+  <TeamPerformanceScatter width={900} height={600} />
 </div>
 
 <style>
-  .team-analysis-placeholder {
+  .team-analysis-page {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    min-height: 80vh;
-    padding: 2rem;
-  }
-
-  h1 {
-    color: white;
-    font-size: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  p {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 1.1rem;
+    min-height: 100vh;
+    width: 100%;
   }
 </style>
