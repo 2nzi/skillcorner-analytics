@@ -17,13 +17,22 @@
 
   let containerRef: HTMLDivElement;
 
-  // Trier les événements par index
-  const sortedEvents = $derived([...events].sort((a, b) => a.index - b.index));
+  // Trier les événements par index (calculé une seule fois)
+  const sortedEvents = $derived.by(() => {
+    if (events.length === 0) return [];
+    return [...events].sort((a, b) => a.index - b.index);
+  });
 
   // Événements actifs (qui se déroulent à la frame actuelle)
-  const activeEventIds = $derived(
-    new Set(events.filter(e => currentFrame >= e.frame_start && currentFrame <= e.frame_end).map(e => e.event_id))
-  );
+  const activeEventIds = $derived.by(() => {
+    const ids = new Set<string>();
+    for (const e of events) {
+      if (currentFrame >= e.frame_start && currentFrame <= e.frame_end) {
+        ids.add(e.event_id);
+      }
+    }
+    return ids;
+  });
 
   // Couleurs par type d'événement - Nuances de vert cohérentes avec le site
   const EVENT_COLORS: Record<string, string> = {
@@ -38,13 +47,21 @@
     return EVENT_COLORS[eventType] || EVENT_COLORS.default;
   }
 
-  // Auto-scroll vers l'événement actif
+  // Auto-scroll désactivé pendant le playback pour les performances
+  // Réactivé uniquement lors d'un clic sur un event
+  let previousActiveEventId: string | null = null;
+
   $effect(() => {
     if (containerRef && activeEventIds.size > 0) {
       const activeEventId = Array.from(activeEventIds)[0];
-      const activeElement = containerRef.querySelector(`[data-event-id="${activeEventId}"]`);
-      if (activeElement) {
-        activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Ne scroll que si l'événement actif a changé (pas à chaque frame)
+      if (activeEventId !== previousActiveEventId) {
+        previousActiveEventId = activeEventId;
+        const activeElement = containerRef.querySelector(`[data-event-id="${activeEventId}"]`);
+        if (activeElement) {
+          // Utiliser 'auto' au lieu de 'smooth' pour éviter l'animation coûteuse
+          activeElement.scrollIntoView({ behavior: 'auto', block: 'center' });
+        }
       }
     }
   });
@@ -94,13 +111,14 @@
     padding: 0.75rem 1rem;
     text-align: left;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     color: white;
     position: relative;
     opacity: 0.85;
+    will-change: opacity, transform;
     /* Forme avec angles coupés (notched) comme les contrôles de playback */
     clip-path: polygon(
       10px 0,
