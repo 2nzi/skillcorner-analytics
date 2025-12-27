@@ -7,6 +7,7 @@
   import MatchTimeline from '$lib/components/features/match-analysis/MatchTimeline.svelte';
   import PlaybackControls from '$lib/components/features/match-analysis/PlaybackControls.svelte';
   import XGChart from '$lib/components/features/match-analysis/XGChart.svelte';
+  import XMetricsScatter from '$lib/components/features/match-analysis/XMetricsScatter.svelte';
   import EventsList from '$lib/components/features/match-analysis/EventsList.svelte';
   import type {
     SkillCornerMatch,
@@ -414,6 +415,36 @@
               awayTeamId={matchData.away_team.id}
               homeTeamColor={homeTeamInfo.color}
               awayTeamColor={awayTeamInfo.color}
+              onFrameChange={handleTimelineFrameChange}
+              width={fieldSvgWidth}
+              isLoading={isLoadingMatchData}
+            />
+
+            <!-- Graphique Player Targeted xThreat (cumulé) -->
+            <XMetricsScatter
+              periods={matchData.match_periods}
+              events={eventsData}
+              currentFrame={currentFrameNumber}
+              homeTeamId={matchData.home_team.id}
+              awayTeamId={matchData.away_team.id}
+              homeTeamColor={homeTeamInfo.color}
+              awayTeamColor={awayTeamInfo.color}
+              metric="player_targeted_xthreat"
+              onFrameChange={handleTimelineFrameChange}
+              width={fieldSvgWidth}
+              isLoading={isLoadingMatchData}
+            />
+
+            <!-- Graphique Player Targeted xPass Completion (cumulé) -->
+            <XMetricsScatter
+              periods={matchData.match_periods}
+              events={eventsData}
+              currentFrame={currentFrameNumber}
+              homeTeamId={matchData.home_team.id}
+              awayTeamId={matchData.away_team.id}
+              homeTeamColor={homeTeamInfo.color}
+              awayTeamColor={awayTeamInfo.color}
+              metric="player_targeted_xpass_completion"
               onFrameChange={handleTimelineFrameChange}
               width={fieldSvgWidth}
               isLoading={isLoadingMatchData}

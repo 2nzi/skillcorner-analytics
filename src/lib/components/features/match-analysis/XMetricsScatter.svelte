@@ -10,6 +10,7 @@
     awayTeamId: number;
     homeTeamColor: string;
     awayTeamColor: string;
+    metric: 'player_targeted_xthreat' | 'player_targeted_xpass_completion';
     onFrameChange: (frame: number) => void;
     width?: number | null;
     isLoading?: boolean;
@@ -23,23 +24,25 @@
     awayTeamId,
     homeTeamColor,
     awayTeamColor,
+    metric = 'player_targeted_xthreat',
     onFrameChange,
     width = null,
     isLoading = false
   }: Props = $props();
 
-  // Constantes de style (synchronisées avec MatchTimeline)
+  // Constantes de style (synchronisées avec MatchTimeline et XGChart)
   const CHART_HEIGHT = 80;
   const PADDING_TOP = 20;
   const PADDING_BOTTOM = 15;
-  const PERIOD_GAP = 4; // Gap entre les périodes (identique à timeline: gap: 4px)
-  const NOTCH_SIZE = 10; // Taille des coins coupés (identique à timeline)
+  const PERIOD_GAP = 4;
+  const NOTCH_SIZE = 10;
+  const DOT_RADIUS = 3;
 
-  // Filtrer les événements avec xthreat valide
-  const validEvents = $derived(filterByNumericField(events, 'xthreat'));
+  // Filtrer les événements avec la métrique valide
+  const validEvents = $derived(filterByNumericField(events, metric));
 
-  // Calculer les données xThreat cumulées pour chaque équipe par période
-  const xThreatData = $derived.by(() => {
+  // Calculer les données cumulées pour chaque équipe (comme xThreat)
+  const cumulativeData = $derived.by(() => {
     if (periods.length === 0 || validEvents.length === 0) {
       return { home: [], away: [], maxValue: 0 };
     }
@@ -54,13 +57,13 @@
     const sortedEvents = [...validEvents].sort((a, b) => a.frame_start - b.frame_start);
 
     sortedEvents.forEach(event => {
-      const xthreat = Number(event.xthreat) || 0;
+      const value = Number(event[metric]) || 0;
 
       if (event.team_id === homeTeamId) {
-        homeCumulative += xthreat;
+        homeCumulative += value;
         homeData.push({ frame: event.frame_start, cumulative: homeCumulative });
       } else if (event.team_id === awayTeamId) {
-        awayCumulative += xthreat;
+        awayCumulative += value;
         awayData.push({ frame: event.frame_start, cumulative: awayCumulative });
       }
     });
@@ -70,7 +73,14 @@
     return { home: homeData, away: awayData, maxValue };
   });
 
-  // Générer les points du SVG path pour une équipe dans une période
+  // Label de la métrique (texte complet)
+  const metricLabel = $derived(
+    metric === 'player_targeted_xthreat'
+      ? 'Player Targeted xThreat'
+      : 'xPass Completion'
+  );
+
+  // Générer les points du SVG path pour une équipe dans une période (comme XGChart)
   function generatePathForPeriod(
     data: Array<{ frame: number; cumulative: number }>,
     period: SkillCornerMatchPeriod,
@@ -123,8 +133,8 @@
   let tooltipVisible = $state(false);
   let tooltipX = $state(0);
   let tooltipY = $state(0);
-  let tooltipHomeValue = $state(0);
-  let tooltipAwayValue = $state(0);
+  let tooltipValue = $state(0);
+  let tooltipTeam = $state('');
 
   function handleClickOnPeriod(event: MouseEvent, periodIndex: number) {
     const target = event.currentTarget as SVGRectElement;
@@ -145,7 +155,7 @@
 
   function handleMouseMove(event: MouseEvent) {
     if (isDragging && activePeriodIndex !== null) {
-      const periodRect = document.querySelector(`[data-xg-period="${activePeriodIndex}"]`) as SVGRectElement;
+      const periodRect = document.querySelector(`[data-scatter-period="${activePeriodIndex}"]`) as SVGRectElement;
       if (periodRect) {
         const rect = periodRect.getBoundingClientRect();
         const x = event.clientX - rect.left;
@@ -163,53 +173,23 @@
     activePeriodIndex = null;
   }
 
-  // Gestion du tooltip au survol
-  function handlePeriodHover(event: MouseEvent, periodIndex: number) {
-    const target = event.currentTarget as SVGRectElement;
-    const rect = target.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(1, x / rect.width));
-
-    const period = periods[periodIndex];
-    const targetFrame = period.start_frame + percentage * period.duration_frames;
-
-    // Trouver les valeurs cumulées les plus proches de cette frame
-    const homeValue = findCumulativeValueAtFrame(xThreatData.home, targetFrame);
-    const awayValue = findCumulativeValueAtFrame(xThreatData.away, targetFrame);
-
-    tooltipHomeValue = homeValue;
-    tooltipAwayValue = awayValue;
+  // Gestion du tooltip au survol d'un point
+  function handleDotHover(event: MouseEvent, value: number, team: 'home' | 'away') {
+    tooltipValue = value;
+    tooltipTeam = team;
     tooltipX = event.clientX;
-    tooltipY = rect.top - 10; // Au-dessus du graphique
+    tooltipY = event.pageY - 10;
     tooltipVisible = true;
   }
 
-  function handlePeriodLeave() {
+  function handleDotLeave() {
     tooltipVisible = false;
-  }
-
-  function findCumulativeValueAtFrame(
-    data: Array<{ frame: number; cumulative: number }>,
-    targetFrame: number
-  ): number {
-    if (data.length === 0) return 0;
-
-    // Trouver la valeur cumulée la plus proche avant ou à cette frame
-    let value = 0;
-    for (const point of data) {
-      if (point.frame <= targetFrame) {
-        value = point.cumulative;
-      } else {
-        break;
-      }
-    }
-    return value;
   }
 </script>
 
 <svelte:window onmouseup={handleMouseUp} onmousemove={handleMouseMove} />
 
-<div class="xg-chart-container" style={width ? `width: ${width}px` : ''}>
+<div class="scatter-chart-container" style={width ? `width: ${width}px` : ''}>
   {#if isLoading || periods.length === 0}
     <!-- Placeholder pendant le chargement -->
     <div class="chart-loading" style="height: {CHART_HEIGHT}px"></div>
@@ -217,7 +197,7 @@
     <svg
       width="100%"
       height={CHART_HEIGHT}
-      class="xg-chart"
+      class="scatter-chart"
     >
       <!-- Label du graphique - positionné horizontalement en haut à gauche -->
       <text
@@ -228,7 +208,7 @@
         font-weight="700"
         fill="rgba(0, 0, 0, 0.8)"
       >
-        xThreat
+        {metricLabel}
       </text>
 
       {#each periods as period, i}
@@ -247,11 +227,13 @@
         {@const previousPeriodsRatio = previousPeriodsFrames / totalFrames}
         {@const periodStart = previousPeriodsRatio * availableWidth + (i * PERIOD_GAP)}
 
+        {@const drawHeight = CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM}
+
         <!-- Zone cliquable de la période avec style notched -->
         <g>
           <!-- Background notched (coins coupés haut-droit et bas-gauche) -->
           <defs>
-            <clipPath id="notch-clip-{i}">
+            <clipPath id="scatter-notch-clip-{i}">
               <polygon points="{periodStart},{0} {periodStart + periodWidth - NOTCH_SIZE},{0} {periodStart + periodWidth},{NOTCH_SIZE} {periodStart + periodWidth},{CHART_HEIGHT} {periodStart + NOTCH_SIZE},{CHART_HEIGHT} {periodStart},{CHART_HEIGHT - NOTCH_SIZE}" />
             </clipPath>
           </defs>
@@ -263,23 +245,21 @@
             width={periodWidth}
             height={CHART_HEIGHT}
             fill="rgba(0, 0, 0, 0.15)"
-            clip-path="url(#notch-clip-{i})"
-            data-xg-period={i}
+            clip-path="url(#scatter-notch-clip-{i})"
+            data-scatter-period={i}
             onmousedown={(e) => handleMouseDownOnPeriod(e, i)}
-            onmousemove={(e) => handlePeriodHover(e, i)}
-            onmouseleave={handlePeriodLeave}
             onkeydown={() => {}}
             style="cursor: pointer;"
             role="button"
-            aria-label="xThreat chart période {period.period}"
+            aria-label="Scatter chart période {period.period}"
             tabindex={0}
           />
 
-          <!-- Lignes xThreat dans cette période -->
-          <g clip-path="url(#notch-clip-{i})">
+          <!-- Lignes cumulées dans cette période -->
+          <g clip-path="url(#scatter-notch-clip-{i})">
             <!-- Ligne home team -->
             <path
-              d={generatePathForPeriod(xThreatData.home, period, periodWidth, xThreatData.maxValue)}
+              d={generatePathForPeriod(cumulativeData.home, period, periodWidth, cumulativeData.maxValue)}
               transform="translate({periodStart}, 0)"
               fill="none"
               stroke={homeTeamColor}
@@ -292,7 +272,7 @@
 
             <!-- Ligne away team -->
             <path
-              d={generatePathForPeriod(xThreatData.away, period, periodWidth, xThreatData.maxValue)}
+              d={generatePathForPeriod(cumulativeData.away, period, periodWidth, cumulativeData.maxValue)}
               transform="translate({periodStart}, 0)"
               fill="none"
               stroke={awayTeamColor}
@@ -341,30 +321,26 @@
   {#if tooltipVisible}
     <div class="tooltip" style="left: {tooltipX}px; top: {tooltipY}px">
       <div class="tooltip-row">
-        <span class="tooltip-color" style="background-color: {homeTeamColor}"></span>
-        <span class="tooltip-value">{tooltipHomeValue.toFixed(2)}</span>
-      </div>
-      <div class="tooltip-row">
-        <span class="tooltip-color" style="background-color: {awayTeamColor}"></span>
-        <span class="tooltip-value">{tooltipAwayValue.toFixed(2)}</span>
+        <span class="tooltip-color" style="background-color: {tooltipTeam === 'home' ? homeTeamColor : awayTeamColor}"></span>
+        <span class="tooltip-value">{tooltipValue.toFixed(3)}</span>
       </div>
     </div>
   {/if}
 </div>
 
 <style>
-  .xg-chart-container {
+  .scatter-chart-container {
     width: 100%;
     position: relative;
     margin-top: 1rem;
   }
 
-  .xg-chart {
+  .scatter-chart {
     display: block;
   }
 
   /* Enlever le contour noir lors de la sélection */
-  .xg-chart rect:focus {
+  .scatter-chart rect:focus {
     outline: none;
   }
 
