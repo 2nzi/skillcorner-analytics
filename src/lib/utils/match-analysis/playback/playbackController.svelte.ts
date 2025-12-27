@@ -31,9 +31,11 @@ export const PLAYBACK_CONFIG = {
  */
 export interface PlaybackController {
   isPlaying: boolean;
+  playbackSpeed: number;
   play: () => void;
   pause: () => void;
   togglePlayPause: () => void;
+  setPlaybackSpeed: (speed: number) => void;
   previousFrame: () => void;
   nextFrame: () => void;
   jumpBackward: () => void;
@@ -62,6 +64,7 @@ export function createPlaybackController(
   onFrameIndexChange: (newIndex: number) => void
 ): PlaybackController {
   let isPlaying = $state(false);
+  let playbackSpeed = $state(1);
   let playIntervalId: ReturnType<typeof setInterval> | null = null;
 
   /**
@@ -81,7 +84,17 @@ export function createPlaybackController(
         // Fin du match, arrêter la lecture
         pause();
       }
-    }, PLAYBACK_CONFIG.PLAYBACK_INTERVAL_MS);
+    }, PLAYBACK_CONFIG.PLAYBACK_INTERVAL_MS / playbackSpeed);
+  }
+
+  /**
+   * Change la vitesse de lecture
+   */
+  function setPlaybackSpeed(speed: number) {
+    const wasPlaying = isPlaying;
+    if (wasPlaying) pause();
+    playbackSpeed = speed;
+    if (wasPlaying) play();
   }
 
   /**
@@ -159,9 +172,11 @@ export function createPlaybackController(
 
   return {
     get isPlaying() { return isPlaying; },
+    get playbackSpeed() { return playbackSpeed; },
     play,
     pause,
     togglePlayPause,
+    setPlaybackSpeed,
     previousFrame,
     nextFrame,
     jumpBackward,

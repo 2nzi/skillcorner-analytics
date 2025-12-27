@@ -323,61 +323,43 @@
 
   <!-- Section contentMatch : affichée uniquement si un match est sélectionné -->
   {#if selectedMatch}
-    <div class="content-match-wrapper">
-      <!-- Contenu principal du match à gauche -->
-      <div class="content-match">
-        <!-- Section pliable des infos du match -->
-        {#if matchData}
-          <div class="match-info-section">
-          <button
-            class="match-info-toggle"
-            onclick={() => isMatchInfoOpen = !isMatchInfoOpen}
-            aria-expanded={isMatchInfoOpen}
-          >
-            <span>Informations du match</span>
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="currentColor"
-              style="transform: rotate({isMatchInfoOpen ? '180deg' : '0deg'}); transition: transform 0.2s;"
-            >
-              <path d="M7 10l5 5 5-5z" />
-            </svg>
-          </button>
-
-          {#if isMatchInfoOpen}
-            <div class="match-info">
-              <div class="team-score">
-                <div class="jersey-color" style="background-color: {matchData.home_team_kit?.jersey_color || '#ff4444'}"></div>
-                <img
-                  src="/api/team-logo/{matchData.home_team.id}"
-                  alt="{matchData.home_team.short_name}"
-                  class="team-logo"
-                />
-                <span class="team-name">{matchData.home_team.short_name}</span>
-                <span class="score">{matchData.home_team_score}</span>
-              </div>
-              <div class="match-details">
-                <div class="score-separator">-</div>
-                {#if matchData.stadium}
-                  <div class="stadium-info">{matchData.stadium.name}</div>
-                {/if}
-              </div>
-              <div class="team-score">
-                <span class="score">{matchData.away_team_score}</span>
-                <span class="team-name">{matchData.away_team.short_name}</span>
-                <img
-                  src="/api/team-logo/{matchData.away_team.id}"
-                  alt="{matchData.away_team.short_name}"
-                  class="team-logo"
-                />
-                <div class="jersey-color" style="background-color: {matchData.away_team_kit?.jersey_color || '#4444ff'}"></div>
-              </div>
-            </div>
-          {/if}
+    <!-- Infos du match en haut (toute la largeur) -->
+    {#if matchData}
+      <div class="match-info-header">
+        <div class="match-info">
+          <div class="team-score">
+            <div class="jersey-color" style="background-color: {matchData.home_team_kit?.jersey_color || '#ff4444'}"></div>
+            <img
+              src="/api/team-logo/{matchData.home_team.id}"
+              alt="{matchData.home_team.short_name}"
+              class="team-logo"
+            />
+            <span class="team-name">{matchData.home_team.short_name}</span>
+            <span class="score">{matchData.home_team_score}</span>
           </div>
-        {/if}
+          <div class="match-details">
+            <div class="score-separator">-</div>
+            {#if matchData.stadium}
+              <div class="stadium-info">{matchData.stadium.name}</div>
+            {/if}
+          </div>
+          <div class="team-score">
+            <span class="score">{matchData.away_team_score}</span>
+            <span class="team-name">{matchData.away_team.short_name}</span>
+            <img
+              src="/api/team-logo/{matchData.away_team.id}"
+              alt="{matchData.away_team.short_name}"
+              class="team-logo"
+            />
+            <div class="jersey-color" style="background-color: {matchData.away_team_kit?.jersey_color || '#4444ff'}"></div>
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <div class="content-match-wrapper">
+      <!-- Contenu principal du match à gauche (50%) -->
+      <div class="content-match">
 
         <!-- Terrain de football (affiché immédiatement dès la sélection du match) -->
         <div class="field-section" bind:this={fieldSectionRef}>
@@ -387,11 +369,13 @@
             {matchData}
             {currentFrame}
             isPlaying={playbackController.isPlaying}
+            playbackSpeed={playbackController.playbackSpeed}
             isLoading={isLoadingMatchData}
             hasTrackingData={trackingData.length > 0}
             onPlayPause={playbackController.togglePlayPause}
             onJumpBackward={playbackController.jumpBackward}
             onJumpForward={playbackController.jumpForward}
+            onSpeedChange={playbackController.setPlaybackSpeed}
           />
 
           <!-- Terrain, timeline et graphique -->
@@ -439,7 +423,7 @@
         </div>
       </div>
 
-      <!-- Liste des événements à droite -->
+      <!-- Liste des événements à droite (50%) -->
       <div class="events-sidebar">
         <EventsList
           events={eventsData}
@@ -484,23 +468,31 @@
     margin-bottom: 2rem;
   }
 
+  /* Match info header (toute la largeur en haut) */
+  .match-info-header {
+    width: 100%;
+    background: white;
+    padding: 1rem var(--spacing-lg);
+    margin-bottom: 0;
+  }
+
   /* Wrapper pour content-match + events sidebar */
   .content-match-wrapper {
     width: 100%;
     display: flex;
     flex-direction: row;
-    gap: 1rem;
+    gap: 0;
     align-items: flex-start;
     background: white;
     position: relative;
     z-index: 1;
-    padding: 0 var(--spacing-lg);
   }
 
-  /* Section contentMatch (colonne gauche) */
+  /* Section contentMatch (colonne gauche - 65%) */
   .content-match {
-    flex: 1;
+    flex: 0 0 65%;
     min-width: 0;
+    padding: 0 var(--spacing-lg);
   }
 
   /* Section du terrain */
@@ -530,47 +522,12 @@
     padding: 0;
   }
 
-  /* Barre latérale des événements (colonne droite) */
+  /* Barre latérale des événements (colonne droite - 35%) */
   .events-sidebar {
-    width: 350px;
-    flex-shrink: 0;
+    flex: 0 0 35%;
+    min-width: 0;
     overflow: hidden;
-    position: sticky;
-    top: 1rem;
-    align-self: flex-start;
-  }
-
-  /* Section pliable des infos du match */
-  .match-info-section {
-    width: 100%;
-    max-width: 1400px;
-    margin-bottom: 1rem;
-    background: rgba(0, 0, 0, 0.03);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .match-info-toggle {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    border: none;
-    background: rgba(0, 0, 0, 0.05);
-    color: #333;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .match-info-toggle:hover {
-    background: rgba(0, 0, 0, 0.08);
-  }
-
-  .match-info-toggle svg {
-    flex-shrink: 0;
+    border-left: 1px solid #ddd;
   }
 
   /* Infos du match (score, logos, stade) */

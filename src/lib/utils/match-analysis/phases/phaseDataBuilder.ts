@@ -95,9 +95,13 @@ function calculateBallMovementRange(
  * Filtre les événements pour ne garder que les player_possession qui se
  * terminent par une passe, puis transforme leurs coordonnées.
  *
+ * IMPORTANT: Les coordonnées des événements sont normalisées (toujours comme si
+ * l'équipe attaquait vers la droite). Il faut donc les transformer en fonction
+ * de l'attacking_side de CHAQUE événement, pas celui de la phase.
+ *
  * @param events - Tous les événements du match
  * @param phase - Phase de jeu
- * @param attackingSide - Sens d'attaque
+ * @param attackingSide - Sens d'attaque (non utilisé, gardé pour compatibilité)
  * @returns Tableau de passes avec coordonnées start/end transformées
  *
  * @example
@@ -126,13 +130,18 @@ function extractPassEventsFromPhase(
   );
 
   // Transformer les coordonnées des passes
-  return passEvents.map(event => ({
-    xStart: transformX(event.x_start, attackingSide),
-    yStart: transformY(event.y_start, attackingSide),
-    xEnd: transformX(event.x_end, attackingSide),
-    yEnd: transformY(event.y_end, attackingSide),
-    frameStart: event.frame_start
-  }));
+  // Les coordonnées des événements sont normalisées pour toujours attaquer vers la droite (attacking_side_id = 1)
+  // Si attacking_side_id = 2 (attaque vers la gauche), il faut inverser les coordonnées x et y
+  return passEvents.map(event => {
+    const needsFlip = event.attacking_side_id === 2;
+    return {
+      xStart: needsFlip ? -event.x_start : event.x_start,
+      yStart: needsFlip ? -event.y_start : event.y_start,
+      xEnd: needsFlip ? -event.x_end : event.x_end,
+      yEnd: needsFlip ? -event.y_end : event.y_end,
+      frameStart: event.frame_start
+    };
+  });
 }
 
 /**

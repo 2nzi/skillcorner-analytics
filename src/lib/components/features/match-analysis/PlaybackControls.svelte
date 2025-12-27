@@ -8,9 +8,11 @@
     isPlaying: boolean;
     isLoading: boolean;
     hasTrackingData: boolean;
+    playbackSpeed: number;
     onPlayPause: () => void;
     onJumpBackward: () => void;
     onJumpForward: () => void;
+    onSpeedChange: (speed: number) => void;
   }
 
   let {
@@ -19,10 +21,20 @@
     isPlaying,
     isLoading,
     hasTrackingData,
+    playbackSpeed,
     onPlayPause,
     onJumpBackward,
-    onJumpForward
+    onJumpForward,
+    onSpeedChange
   }: Props = $props();
+
+  const SPEED_OPTIONS = [1, 2, 3, 4, 5];
+
+  function cycleSpeed() {
+    const currentIndex = SPEED_OPTIONS.indexOf(playbackSpeed);
+    const nextIndex = (currentIndex + 1) % SPEED_OPTIONS.length;
+    onSpeedChange(SPEED_OPTIONS[nextIndex]);
+  }
 </script>
 
 <!-- Barre de contrôle avec score et timer (au-dessus du terrain) -->
@@ -89,6 +101,17 @@
       <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
         <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z" />
       </svg>
+    </button>
+
+    <!-- Sélecteur de vitesse (cycle x1 -> x5) -->
+    <button
+      class="nav-btn jump-btn speed-cycle-btn"
+      onclick={cycleSpeed}
+      disabled={isLoading || !hasTrackingData}
+      aria-label={`Vitesse x${playbackSpeed}`}
+      title="Changer la vitesse"
+    >
+      <span class="jump-label">x{playbackSpeed}</span>
     </button>
   </div>
 
@@ -192,34 +215,8 @@
     z-index: 2;
   }
 
-  /* Bouton -5s : /-5s/ (coupe à droite) */
-  .jump-btn:first-child {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    padding: 0 0.75rem;
-    border: none;
-    background: #3a5742;
-    color: white;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    margin: 0;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
-    min-width: 60px;
-    clip-path: polygon(
-      20px 0,
-      100% 0,
-      calc(100% - 20px) 100%,
-      0 100%
-    );
-    margin-right: -12px;
-    z-index: 3;
-  }
-
-  /* Bouton +5s : \+5s\ (coupe à gauche) */
-  .jump-btn:last-child {
+  /* Boutons de saut (-5s, +5s, vitesse) */
+  .jump-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -242,6 +239,11 @@
     );
     margin-left: -12px;
     z-index: 3;
+  }
+
+  .jump-btn:first-child {
+    margin-right: -12px;
+    margin-left: 0;
   }
 
   .jump-btn:hover:not(:disabled) {
@@ -316,4 +318,5 @@
     font-weight: 700;
     letter-spacing: 0.05em;
   }
+
 </style>
