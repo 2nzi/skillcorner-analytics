@@ -159,6 +159,73 @@
     const logoGroup = g.append('g').attr('class', 'logo-layer');
     const labelGroup = g.append('g').attr('class', 'label-layer');
 
+    // Create legend group (shown on hover)
+    const circleRadius = 10;
+    const textDistance = 25;
+    const legendOffset = 50;
+
+    const legendGroup = svg.append('g')
+      .attr('class', 'legend-svg')
+      .attr('transform', `translate(${margin.left + legendOffset},${margin.top + legendOffset})`)
+      .style('opacity', 0)
+      .style('display', 'none');
+
+    // Legend circle
+    legendGroup.append('circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', circleRadius)
+      .attr('fill', 'none')
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1)
+      .attr('opacity', 0.5);
+
+    // Left text (horizontal)
+    const leftText = legendGroup.append('text')
+      .attr('x', -(circleRadius + textDistance))
+      .attr('y', 3)
+      .attr('fill', 'white')
+      .attr('font-size', '8px')
+      .attr('text-anchor', 'middle')
+      .attr('opacity', 0.8);
+    leftText.append('tspan').attr('x', -(circleRadius + textDistance)).attr('dy', 0).text('TEAM 1');
+    leftText.append('tspan').attr('x', -(circleRadius + textDistance)).attr('dy', 10).text('Axe X');
+
+    // Right text (horizontal)
+    const rightText = legendGroup.append('text')
+      .attr('x', circleRadius + textDistance)
+      .attr('y', 3)
+      .attr('fill', 'white')
+      .attr('font-size', '8px')
+      .attr('text-anchor', 'middle')
+      .attr('opacity', 0.8);
+    rightText.append('tspan').attr('x', circleRadius + textDistance).attr('dy', 0).text('TEAM 2');
+    rightText.append('tspan').attr('x', circleRadius + textDistance).attr('dy', 10).text('Axe X');
+
+    // Bottom text (vertical, rotated)
+    const bottomText = legendGroup.append('text')
+      .attr('x', 0)
+      .attr('y', circleRadius + textDistance)
+      .attr('fill', 'white')
+      .attr('font-size', '8px')
+      .attr('text-anchor', 'middle')
+      .attr('transform', `rotate(-90, 0, ${circleRadius + textDistance})`)
+      .attr('opacity', 0.8);
+    bottomText.append('tspan').attr('x', 0).attr('dy', 0).text('TEAM 1');
+    bottomText.append('tspan').attr('x', 0).attr('dy', 10).text('Axe Y');
+
+    // Top text (vertical, rotated)
+    const topText = legendGroup.append('text')
+      .attr('x', 0)
+      .attr('y', -(circleRadius + textDistance))
+      .attr('fill', 'white')
+      .attr('font-size', '8px')
+      .attr('text-anchor', 'middle')
+      .attr('transform', `rotate(-90, 0, ${-(circleRadius + textDistance)})`)
+      .attr('opacity', 0.8);
+    topText.append('tspan').attr('x', 0).attr('dy', 0).text('TEAM 2');
+    topText.append('tspan').attr('x', 0).attr('dy', 10).text('Axe Y');
+
     // Main axes
     g.append('line')
       .attr('x1', xScale(avgX))
@@ -241,6 +308,13 @@
       .style('opacity', 0.85)
       .on('mouseenter', function(_event, d) {
         const opponentIds = getOpponentIds(d.team_id);
+
+        // Show legend
+        svg.select('.legend-svg')
+          .style('display', 'block')
+          .transition()
+          .duration(200)
+          .style('opacity', 1);
 
         logoGroup.selectAll('image.team-logo')
           .transition()
@@ -407,6 +481,15 @@
           .text(d.team_name);
       })
       .on('mouseleave', function() {
+        // Hide legend
+        svg.select('.legend-svg')
+          .transition()
+          .duration(200)
+          .style('opacity', 0)
+          .on('end', function() {
+            d3.select(this).style('display', 'none');
+          });
+
         labelGroup.selectAll('.matchup-label').remove();
         glowGroup.selectAll('.matchup-glow').remove();
         labelGroup.selectAll('.team-name-label').remove();
