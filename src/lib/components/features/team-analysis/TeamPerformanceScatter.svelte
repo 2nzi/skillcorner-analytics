@@ -16,17 +16,46 @@
     team_color: string;
     avg_possession: number;
     avg_pass_accuracy: number;
+    avg_pass_volume: number;
+    avg_total_xthreat: number;
+    avg_obr_per_min: number;
+    avg_lb_attempts: number;
+    avg_lb_success_rate: number;
+    avg_pressing_actions: number;
+    avg_regain_rate: number;
     matches_played: number;
     matchups: MatchupData[];
   }
+
+  // Available metrics for axes
+  interface MetricDef {
+    id: string;
+    label: string;
+    unit?: string;
+    accessor: (team: TeamPerformance) => number;
+  }
+
+  const AVAILABLE_METRICS: MetricDef[] = [
+    { id: 'possession', label: 'Possession', unit: '%', accessor: (t) => t.avg_possession },
+    { id: 'pass_accuracy', label: 'Pass Accuracy', unit: '%', accessor: (t) => t.avg_pass_accuracy },
+    { id: 'pass_volume', label: 'Pass Volume', accessor: (t) => t.avg_pass_volume },
+    { id: 'total_xthreat', label: 'Total xThreat', accessor: (t) => t.avg_total_xthreat },
+    { id: 'obr_per_min', label: 'Off-Ball Runs / min', accessor: (t) => t.avg_obr_per_min },
+    { id: 'lb_attempts', label: 'Line Break Attempts', accessor: (t) => t.avg_lb_attempts },
+    { id: 'lb_success_rate', label: 'Line Break Success', unit: '%', accessor: (t) => t.avg_lb_success_rate },
+    { id: 'pressing_actions', label: 'Pressing Actions', accessor: (t) => t.avg_pressing_actions },
+    { id: 'regain_rate', label: 'Regain Rate', unit: '%', accessor: (t) => t.avg_regain_rate }
+  ];
 
   // Props
   interface Props {
     width?: number;
     height?: number;
+    xMetricId?: string;
+    yMetricId?: string;
   }
 
-  let { width = 800, height = 600 }: Props = $props();
+  let { width = 800, height = 600, xMetricId = 'possession', yMetricId = 'pass_accuracy' }: Props = $props();
 
   // Data
   let teams = $state<TeamPerformance[]>([]);
@@ -42,16 +71,20 @@
   const chartWidth = $derived(width - margin.left - margin.right);
   const chartHeight = $derived(height - margin.top - margin.bottom);
 
-  // Calculate averages for centering
-  const avgPossession = $derived.by(() => {
+  // Get selected metrics
+  const xMetric = $derived(AVAILABLE_METRICS.find(m => m.id === xMetricId) || AVAILABLE_METRICS[0]);
+  const yMetric = $derived(AVAILABLE_METRICS.find(m => m.id === yMetricId) || AVAILABLE_METRICS[1]);
+
+  // Calculate averages for centering (based on selected metrics)
+  const avgX = $derived.by(() => {
     if (teams.length === 0) return 0;
-    const total = teams.reduce((sum, t) => sum + t.avg_possession, 0);
+    const total = teams.reduce((sum, t) => sum + xMetric.accessor(t), 0);
     return total / teams.length;
   });
 
-  const avgPassAccuracy = $derived.by(() => {
+  const avgY = $derived.by(() => {
     if (teams.length === 0) return 0;
-    const total = teams.reduce((sum, t) => sum + t.avg_pass_accuracy, 0);
+    const total = teams.reduce((sum, t) => sum + yMetric.accessor(t), 0);
     return total / teams.length;
   });
 
@@ -59,23 +92,23 @@
   const xScale = $derived.by(() => {
     if (teams.length === 0) return null;
 
-    const possessionValues = teams.map(t => t.avg_possession);
-    const minPossession = Math.min(...possessionValues);
-    const maxPossession = Math.max(...possessionValues);
+    const values = teams.map(t => xMetric.accessor(t));
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
 
     // Calculate symmetric range around average
     const maxDeviation = Math.max(
-      Math.abs(maxPossession - avgPossession),
-      Math.abs(minPossession - avgPossession)
+      Math.abs(maxValue - avgX),
+      Math.abs(minValue - avgX)
     );
 
-    // Add 10% padding
+    // Add 15% padding
     const padding = maxDeviation * 0.15;
 
     return d3.scaleLinear()
       .domain([
-        avgPossession - maxDeviation - padding,
-        avgPossession + maxDeviation + padding
+        avgX - maxDeviation - padding,
+        avgX + maxDeviation + padding
       ])
       .range([0, chartWidth]);
   });
@@ -83,23 +116,23 @@
   const yScale = $derived.by(() => {
     if (teams.length === 0) return null;
 
-    const accuracyValues = teams.map(t => t.avg_pass_accuracy);
-    const minAccuracy = Math.min(...accuracyValues);
-    const maxAccuracy = Math.max(...accuracyValues);
+    const values = teams.map(t => yMetric.accessor(t));
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
 
     // Calculate symmetric range around average
     const maxDeviation = Math.max(
-      Math.abs(maxAccuracy - avgPassAccuracy),
-      Math.abs(minAccuracy - avgPassAccuracy)
+      Math.abs(maxValue - avgY),
+      Math.abs(minValue - avgY)
     );
 
-    // Add 10% padding
+    // Add 15% padding
     const padding = maxDeviation * 0.15;
 
     return d3.scaleLinear()
       .domain([
-        avgPassAccuracy - maxDeviation - padding,
-        avgPassAccuracy + maxDeviation + padding
+        avgY - maxDeviation - padding,
+        avgY + maxDeviation + padding
       ])
       .range([chartHeight, 0]);  // Inverted for SVG
   });
