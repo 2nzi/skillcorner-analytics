@@ -1,11 +1,11 @@
-<div align="center">
+<div align="center" style="display: flex; justify-content: center; align-items: center; gap: 100px;">
 
 <a href="https://skillcorner.com/fr/sports/football" target="_blank">
-  <img src="https://avatars.githubusercontent.com/u/72439998?s=280&v=4" alt="SkillCorner Logo" height="100" style="margin: 0 20px"/>
+  <img src="https://avatars.githubusercontent.com/u/72439998?s=280&v=4" alt="SkillCorner Logo" height="100"/>
 </a>
 
 <a href="https://pysport.org/" target="_blank">
-  <img src="https://pysport.org/static/media/logo.d7231fdc56aed9fb78a21a9bef3bcbb1.svg" alt="PySport Logo" height="100" style="margin: 0 20px"/>
+  <img src="https://pysport.org/static/media/logo.d7231fdc56aed9fb78a21a9bef3bcbb1.svg" alt="PySport Logo" height="100"/>
 </a>
 
 </div>
