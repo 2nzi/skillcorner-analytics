@@ -1,11 +1,11 @@
 <div align="center">
 
 <a href="https://skillcorner.com/fr/sports/football" target="_blank">
-  <img src="https://avatars.githubusercontent.com/u/72439998?s=280&v=4" alt="SkillCorner Logo" width="150" style="margin: 0 20px"/>
+  <img src="https://avatars.githubusercontent.com/u/72439998?s=280&v=4" alt="SkillCorner Logo" height="100" style="margin: 0 20px"/>
 </a>
 
 <a href="https://pysport.org/" target="_blank">
-  <img src="https://pysport.org/static/media/logo.d7231fdc56aed9fb78a21a9bef3bcbb1.svg" alt="PySport Logo" width="150" style="margin: 0 20px"/>
+  <img src="https://pysport.org/static/media/logo.d7231fdc56aed9fb78a21a9bef3bcbb1.svg" alt="PySport Logo" height="100" style="margin: 0 20px"/>
 </a>
 
 </div>
@@ -107,7 +107,7 @@ src/
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 ### Match Analysis
 - Real-time tracking visualization with player positions and ball movement
@@ -132,7 +132,7 @@ src/
 
 ---
 
-## 📝 Development Notes
+## Development Notes
 
 ### Project Context
 
@@ -146,12 +146,11 @@ During development, hardware failure resulted in partial code loss despite versi
 
 - **Code Quality**: Some sections require refactoring and better documentation
 - **Performance**: Large datasets may cause slowdowns in certain visualizations
-- **Error Handling**: Not all edge cases are comprehensively handled
 - **Testing**: Limited automated test coverage
 
 ### Development Process
 
-As a Data Engineering student learning web development and football analytics, this project represents significant learning across multiple domains. All design choices, feature specifications, and data analysis approaches were directed by the developer.
+As a Data Engineering student learning web development and football analytics, this project represents significant learning across multiple domains. Development utilized AI assistance (Claude Anthropic) for code implementation, debugging, and technical guidance. All design choices, feature specifications, and data analysis approaches were directed by myself.
 
 ### Future Improvements
 
@@ -165,7 +164,7 @@ As a Data Engineering student learning web development and football analytics, t
 
 ---
 
-## 📚 Data Attribution
+## Data Attribution
 
 All tracking and event data used in this project comes from the [SkillCorner Open Data Repository](https://github.com/SkillCorner/opendata). The data has been included in this repository for submission purposes as per Analytics Cup requirements.
 
@@ -181,5 +180,4 @@ This project was created for the SkillCorner X PySport Analytics Cup. Please ref
 
 - **SkillCorner** for providing high-quality tracking and event data
 - **PySport** for organizing the Analytics Cup
-- **Claude AI (Anthropic)** for development assistance, architectural guidance, and debugging support
 - The football analytics community for inspiration and methodological frameworks
