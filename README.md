@@ -1,47 +1,185 @@
-# Svelte + TS + Vite
+<div align="center">
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+<a href="https://skillcorner.com/fr/sports/football" target="_blank">
+  <img src="https://avatars.githubusercontent.com/u/72439998?s=280&v=4" alt="SkillCorner Logo" width="150" style="margin: 0 20px"/>
+</a>
 
-## Recommended IDE Setup
+<a href="https://pysport.org/" target="_blank">
+  <img src="https://pysport.org/static/media/logo.d7231fdc56aed9fb78a21a9bef3bcbb1.svg" alt="PySport Logo" width="150" style="margin: 0 20px"/>
+</a>
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+</div>
 
-## Need an official Svelte framework?
+---
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+# SkillCorner Analytics Platform
 
-## Technical considerations
+An interactive web-based football analytics platform for comprehensive match and team performance analysis using SkillCorner tracking and event data.
 
-**Why use this over SvelteKit?**
+---
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+## Abstract
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+### Introduction
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+This submission presents an **interactive web-based analytics platform** built with SvelteKit and TypeScript, transforming SkillCorner tracking and event data from the [SkillCorner Open Data Repository](https://github.com/SkillCorner/opendata) into actionable insights through intuitive, synchronized visualizations.
 
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
+### Use Cases
 
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
+**Team Analysis**: Interactive scatter plots for comparative team performance across matches. Dynamic metric selection on both axes with color-coded team identification and match filtering reveals performance.
 
-**Why include `.vscode/extensions.json`?**
+**Match Analysis**: Frame-by-frame match replay with synchronized components: football field with player/ball tracking, phase-of-play detection showing ball movement ranges and pass networks, chronological events list with automatic scrolling, and cumulative performance charts (xThreat, player-targeted xThreat, xPass completion). Interactive timeline navigation with adjustable playback speed.
 
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
+**Player Analysis**: Individual event tracking with detailed metrics including possession time, force backward actions, affected line breaks, and regain statistics.
 
-**Why enable `allowJs` in the TS template?**
+**Scouting**: Cross-match performance aggregation enabling player comparison and recruitment insights through objective, quantifiable metrics.
 
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
+### Potential Audience
 
-**Why is HMR not preserving my local component state?**
+- **Performance Analysts**: Post-match tactical analysis and opponent scouting
+- **Coaching Staff**: Training session planning and in-game strategy development
+- **Recruitment Teams**: Objective player evaluation across competitions
+- **Football Enthusiasts**: Educational tool for understanding modern analytics
 
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
+---
 
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
+## Run Instructions
 
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or pnpm
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
+
+The application will be available at `http://localhost:5173`
+
+---
+
+## Video URL
+
+[Screen Recording - Coming Soon]
+
+---
+
+## URL to Web App / Website
+
+Here the [Skillcorner-PySport Web Application](https://skillcorner-analytics-production.up.railway.app/)
+
+---
+
+## Project Structure
+
+```
+src/
+├── lib/
+│   ├── components/
+│   │   └── features/
+│   │       ├── match-analysis/      # Match replay components
+│   │       ├── team-analysis/       # Team comparison visualizations
+│   │       └── player-analysis/     # Individual player metrics
+│   ├── utils/
+│   │   ├── match-analysis/          # Phase detection, coordinate transforms
+│   │   ├── dataFilters.ts           # Data processing utilities
+│   │   └── coordinateTransform.ts   # Spatial data transformations
+│   └── types/                       # TypeScript type definitions
+├── routes/
+│   └── (app)/
+│       ├── match-analysis/          # Match analysis page
+│       ├── team-analysis/           # Team comparison page
+│       └── player-analysis/         # Player metrics page
+└── data/                            # SkillCorner dataset (from GitHub repo)
+```
+
+---
+
+## ✨ Key Features
+
+### Match Analysis
+- Real-time tracking visualization with player positions and ball movement
+- Phase-of-play detection with automatic range calculation
+- Pass network visualization with coordinate transformation
+- Cumulative performance metrics (xThreat, player-targeted xThreat, xPass completion)
+- Interactive timeline with playback controls and speed adjustment
+- Event-driven navigation with automatic field synchronization
+
+### Team Analysis
+- Dynamic scatter plot visualizations
+- Multi-metric comparison (goals, assists, distance, passes)
+- Color-coded team identification
+- Match-by-match filtering
+- Performance trend analysis
+
+### Player Analysis
+- Individual event tracking and metrics
+- Possession analysis with detailed breakdowns
+- Tactical contribution metrics (force backward, line breaks, regains)
+- Visual event timeline with field overlay
+
+---
+
+## 📝 Development Notes
+
+### Project Context
+
+This project was developed as part of the SkillCorner X PySport Analytics Cup (Analyst Track). The platform demonstrates how rich spatiotemporal football data can be transformed into accessible, interactive visualizations for tactical analysis.
+
+### Technical Challenges
+
+During development, hardware failure resulted in partial code loss despite version control. Some components and code cleanup work had to be rebuilt from earlier commits, which may result in inconsistent code quality across different modules.
+
+### Current Limitations
+
+- **Code Quality**: Some sections require refactoring and better documentation
+- **Performance**: Large datasets may cause slowdowns in certain visualizations
+- **Error Handling**: Not all edge cases are comprehensively handled
+- **Testing**: Limited automated test coverage
+
+### Development Process
+
+As a Data Engineering student learning web development and football analytics, this project represents significant learning across multiple domains. All design choices, feature specifications, and data analysis approaches were directed by the developer.
+
+### Future Improvements
+
+- Code refactoring and cleanup
+- Comprehensive documentation
+- Performance optimizations for large datasets
+- Additional metric visualizations
+- Enhanced error handling and validation
+- Unit and integration testing
+- Mobile-responsive design
+
+---
+
+## 📚 Data Attribution
+
+All tracking and event data used in this project comes from the [SkillCorner Open Data Repository](https://github.com/SkillCorner/opendata). The data has been included in this repository for submission purposes as per Analytics Cup requirements.
+
+---
+
+## License
+
+This project was created for the SkillCorner X PySport Analytics Cup. Please refer to the competition rules for usage guidelines.
+
+---
+
+## Acknowledgments
+
+- **SkillCorner** for providing high-quality tracking and event data
+- **PySport** for organizing the Analytics Cup
+- **Claude AI (Anthropic)** for development assistance, architectural guidance, and debugging support
+- The football analytics community for inspiration and methodological frameworks
