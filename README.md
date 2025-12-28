@@ -107,31 +107,6 @@ src/
 
 ---
 
-## Key Features
-
-### Match Analysis
-- Real-time tracking visualization with player positions and ball movement
-- Phase-of-play detection with automatic range calculation
-- Pass network visualization with coordinate transformation
-- Cumulative performance metrics (xThreat, player-targeted xThreat, xPass completion)
-- Interactive timeline with playback controls and speed adjustment
-- Event-driven navigation with automatic field synchronization
-
-### Team Analysis
-- Dynamic scatter plot visualizations
-- Multi-metric comparison (goals, assists, distance, passes)
-- Color-coded team identification
-- Match-by-match filtering
-- Performance trend analysis
-
-### Player Analysis
-- Individual event tracking and metrics
-- Possession analysis with detailed breakdowns
-- Tactical contribution metrics (force backward, line breaks, regains)
-- Visual event timeline with field overlay
-
----
-
 ## Development Notes
 
 ### Project Context
@@ -141,6 +116,21 @@ This project was developed as part of the SkillCorner X PySport Analytics Cup (A
 ### Technical Challenges
 
 During development, hardware failure resulted in partial code loss despite version control. Some components and code cleanup work had to be rebuilt from earlier commits, which may result in inconsistent code quality across different modules.
+
+### Design & Planned Features
+
+An extensive design system was created in Figma with comprehensive wireframes and mockups. Several planned features from the original design were not implemented:
+
+- **Match Analysis Enhancements**:
+  - Events leading to goals with interactive chart analysis
+  - Individual player charts
+  - Dynamic player statistics overlay synchronized with match playback
+  - Real-time metric updates during timeline navigation
+
+- **Additional Features**:
+  - Advanced filtering and search capabilities
+  - Export functionality for analysis reports
+
 
 ### Current Limitations
 
@@ -154,13 +144,12 @@ As a Data Engineering student learning web development and football analytics, t
 
 ### Future Improvements
 
-- Code refactoring and cleanup
-- Comprehensive documentation
+- Code refactoring and comprehensive documentation
 - Performance optimizations for large datasets
-- Additional metric visualizations
-- Enhanced error handling and validation
-- Unit and integration testing
-- Mobile-responsive design
+- Additional metric visualizations and analysis features
+- Enhanced error handling and edge case coverage
+- Unit and integration testing suite
+- Mobile-responsive design improvements
 
 ---
 
