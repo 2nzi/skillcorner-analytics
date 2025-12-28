@@ -72,7 +72,7 @@ The application will be available at `http://localhost:5173`
 
 ## Video URL
 
-[Screen Recording - Coming Soon]
+[Video Demo 60s](https://github.com/user-attachments/assets/6ff453db-2cee-4d9d-89e9-ce8ad2abda11)
 
 ---
 
